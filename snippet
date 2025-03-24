@@ -1,1 +1,134 @@
-담당할 수 있어서 기쁘네요! 문제 해결에 도움이 되어서 다행입니다. 추가적인 도움이 필요하거나 궁금한 점이 있으면 언제든지 물어보세요. 좋은 하루 되세요! 😊
+import javafx.application.Application;
+import javafx.concurrent.Task;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import java.io.*;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+public class Main extends Application {
+
+    private static final String DOWNLOAD_URL = "https://github.com/apblu7/Snippet/archive/main.zip";
+    private static final String DOWNLOAD_DIR = "C:/download";
+    private static final String TARGET_FILE = "Snippet-main/Snippet"; // 다운로드 후 추출할 파일의 경로
+
+    private TextArea textArea;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Snippet 다운로드 및 추출");
+
+        textArea = new TextArea();
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) { // 더블 클릭 시 전체 텍스트를 선택
+                textArea.selectAll();
+            }
+        });
+
+        Button downloadButton = new Button("다운로드 및 추출");
+        downloadButton.setOnAction(e -> {
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    downloadAndExtract();
+                    return null;
+                }
+            };
+
+            task.setOnSucceeded(event -> {
+                String extractedText = readTextFromFile();
+                textArea.setText(extractedText);
+            });
+
+            new Thread(task).start();
+        });
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+        vbox.getChildren().addAll(downloadButton, textArea);
+
+        StackPane root = new StackPane();
+        root.getChildren().addAll(vbox);
+
+        Scene scene = new Scene(root, 800, 600); // 윈도우 크기 조정
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        // TextArea 크기 조정
+        textArea.prefWidthProperty().bind(scene.widthProperty().subtract(20));
+        textArea.prefHeightProperty().bind(scene.heightProperty().subtract(100));
+    }
+
+    private void downloadAndExtract() {
+        try {
+            URL url = new URL(DOWNLOAD_URL);
+            String zipFilePath = DOWNLOAD_DIR + "/main.zip";
+
+            try (InputStream in = url.openStream();
+                 FileOutputStream out = new FileOutputStream(zipFilePath)) {
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+            }
+
+            unzip(zipFilePath, DOWNLOAD_DIR);
+            Files.deleteIfExists(Paths.get(zipFilePath));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void unzip(String zipFilePath, String destDirectory) throws IOException {
+        byte[] buffer = new byte[1024];
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
+            ZipEntry zipEntry = zis.getNextEntry();
+            while (zipEntry != null) {
+                String fileName = zipEntry.getName();
+                File newFile = new File(destDirectory + File.separator + fileName);
+
+                if (zipEntry.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    new File(newFile.getParent()).mkdirs();
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    }
+                }
+                zipEntry = zis.getNextEntry();
+            }
+            zis.closeEntry();
+        }
+    }
+
+    private String readTextFromFile() {
+        Path filePath = Paths.get(DOWNLOAD_DIR, TARGET_FILE);
+        try {
+            byte[] bytes = Files.readAllBytes(filePath);
+            return new String(bytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
