@@ -1,8 +1,27 @@
-	•	javaw는 콘솔 없는 Java 실행기입니다 (GUI 앱 실행 시 권장)
-	•	start ""는 새 프로세스로 실행
-	•	java → 콘솔 있음
-javaw → 콘솔 없음
+#!/bin/bash
 
-⸻
+KEY="id_rsa_libssh_compat.pem"
 
-✅ 요약
+echo "Modulus:"
+openssl rsa -in $KEY -noout -modulus | cut -d'=' -f2 | xxd -r -p | base64
+
+echo "Exponent:"
+openssl rsa -in $KEY -text -noout | grep publicExponent | awk '{print $2}' | xargs printf "%x" | xxd -r -p | base64
+
+echo "PrivateExponent (D):"
+openssl rsa -in $KEY -text -noout | awk '/privateExponent:/{flag=1;next}/^[^ ]/{flag=0}flag' | tr -d ' \n:' | xxd -r -p | base64
+
+echo "P:"
+openssl rsa -in $KEY -text -noout | awk '/prime1:/{flag=1;next}/^[^ ]/{flag=0}flag' | tr -d ' \n:' | xxd -r -p | base64
+
+echo "Q:"
+openssl rsa -in $KEY -text -noout | awk '/prime2:/{flag=1;next}/^[^ ]/{flag=0}flag' | tr -d ' \n:' | xxd -r -p | base64
+
+echo "DP:"
+openssl rsa -in $KEY -text -noout | awk '/exponent1:/{flag=1;next}/^[^ ]/{flag=0}flag' | tr -d ' \n:' | xxd -r -p | base64
+
+echo "DQ:"
+openssl rsa -in $KEY -text -noout | awk '/exponent2:/{flag=1;next}/^[^ ]/{flag=0}flag' | tr -d ' \n:' | xxd -r -p | base64
+
+echo "InverseQ:"
+openssl rsa -in $KEY -text -noout | awk '/coefficient:/{flag=1;next}/^[^ ]/{flag=0}flag' | tr -d ' \n:' | xxd -r -p | base64
