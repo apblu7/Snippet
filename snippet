@@ -1,8 +1,1 @@
-$rsa = New-Object System.Security.Cryptography.RSACryptoServiceProvider
-$rsa.FromXmlString((Get-Content "private.xml"))
-
-$encBytes = Get-Content "pw.encrypt" -Encoding Byte
-$decBytes = $rsa.Decrypt($encBytes, $false)
-
-$pwd = [System.Text.Encoding]::UTF8.GetString($decBytes)
-Write-Host "복호화된 비밀번호: $pwd"
+powershell -ExecutionPolicy Bypass -File .\decrypt.ps1
