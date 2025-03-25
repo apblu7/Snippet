@@ -1,3 +1,1 @@
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys
-chown -R ubuntu:ubuntu ~/.ssh
+ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -i id_rsa ubuntu@10.110.30.50
