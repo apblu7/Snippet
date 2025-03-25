@@ -1,1 +1,4 @@
-sudo -u sshd stat /home/ubuntu/.ssh/authorized_keys
+sudo mkdir -p /etc/ssh/authorized_keys
+sudo cp ~/.ssh/authorized_keys /etc/ssh/authorized_keys/ubuntu
+sudo chown root:root /etc/ssh/authorized_keys/ubuntu
+sudo chmod 600 /etc/ssh/authorized_keys/ubuntu
