@@ -1,5 +1,3 @@
-echo -n "Dinno@12#$" > pw.txt
-openssl pkeyutl -encrypt \
-  -pubin -inkey ./public.pem \
-  -in pw.txt -out pw.encrypt \
-  -pkeyopt rsa_padding_mode:pkcs1
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv+PiK1FV2gfflbiEcG6SuHYztVm3WEMRxArFbd+EMg2ljH2eOBPDPjOQrzAYTyI+LB2FmfRzMx6fTt3dCg7vPFl+NL3M1zYuPU8gclKYQsoUqKeH2ccEPIYQElQymp0Pbge59e7kiHgQDRk5soDrZt7EsqZ5cF4Kj8xWjMcspkbE+QIDAQAB
+-----END PUBLIC KEY-----
