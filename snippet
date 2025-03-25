@@ -1,1 +1,5 @@
-openssl rsa -pubin -in public.pem -text -noout
+echo -n "Dinno@12#$" > pw.txt
+openssl pkeyutl -encrypt \
+  -pubin -inkey ./public.pem \
+  -in pw.txt -out pw.encrypt \
+  -pkeyopt rsa_padding_mode:pkcs1
