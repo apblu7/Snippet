@@ -1,6 +1,1 @@
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv+PiK1FV2gfflbiEcG6S
-uHYztVm3WEMRxArFbd+EMg2ljH2eOBPDPjOQrzAYTyI+LB2FmfRzMx6fTt3dCg7v
-PFl+NL3M1zYuPU8gclKYQsoUqKeH2ccEPIYQElQymp0Pbge59e7kiHgQDRk5soDr
-Zt7EsqZ5cF4Kj8xWjMcspkbE+QIDAQAB
------END PUBLIC KEY-----
+echo -n "Test123!" | openssl rsautl -encrypt -pubin -inkey public.pem -out pw.enc
