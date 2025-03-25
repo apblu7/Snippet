@@ -1,85 +1,41 @@
-import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
-import javafx.application.Application;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.stage.Stage;
-import javafx.util.Duration;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 
-public class Main extends Application {
 
-    private TextArea textArea;
+⸻
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+✅ 전역 단축키 동작 방식 (JNI)
+	1.	C 코드에서 WinAPI의 RegisterHotKey() 사용
+	2.	Java에서 JNI로 DLL을 호출
+	3.	F5 눌렀을 때 → Java 쪽 콜백 메서드 호출 (또는 플래그 설정)
 
-    @Override
-    public void start(Stage primaryStage) {
-        textArea = new TextArea();
-        textArea.setWrapText(true);
-        textArea.setFont(Font.font("Malgun Gothic", 14));
+⸻
 
-        Button reloadButton = new Button("조회");
-        reloadButton.setOnAction(e -> reloadAndNotify());
+✅ 구현 방식 예시 (구현 예정)
+	•	C (Windows DLL):
+	•	RegisterHotKey(NULL, 1, 0, VK_F5)
+	•	메시지 루프로 핫키 감지
+	•	Java 메서드 호출 (JNI CallStaticVoidMethod)
+	•	Java:
+	•	System.loadLibrary("globalhotkey");
+	•	native void registerHotKey();
+	•	public static void onHotKeyTriggered() → 실제 조회 호출
 
-        VBox content = new VBox(10, textArea, reloadButton);
-        content.setAlignment(Pos.CENTER);
-        content.setStyle("-fx-padding: 20px;");
+⸻
 
-        StackPane root = new StackPane(content);
-        Scene scene = new Scene(root, 800, 600);
+✅ 결과물 제공 형태
+	•	globalhotkey.dll
+	•	GlobalHotKey.java (JNI 연결용 클래스)
+	•	globalhotkey.h (헤더, JNI 바인딩용)
+	•	C 소스파일 (globalhotkey.c)
 
-        // F5 키 이벤트
-        scene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.F5) {
-                reloadAndNotify();
-            }
-        });
+⸻
 
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Snippet Viewer");
-        primaryStage.show();
-    }
+✅ 질문
 
-    private void reloadAndNotify() {
-        String dummyText = "예제 텍스트입니다. 클립보드로 복사됨.";
-        textArea.setText(dummyText);
-        copyToClipboard(dummyText);
-        showToast((StackPane) textArea.getScene().getRoot(), "조회 완료");
-    }
+JNI 버전 제공을 위해 다음 정보가 필요합니다:
+	1.	F5 단축키만 등록하면 되나요?
+	2.	Java 쪽에서 호출할 메서드명은 reload()면 될까요?
+	3.	이 기능을 포함한 샘플 프로젝트 zip 형태로 원하시나요?
 
-    private void copyToClipboard(String text) {
-        Clipboard clipboard = Clipboard.getSystemClipboard();
-        ClipboardContent content = new ClipboardContent();
-        content.putString(text);
-        clipboard.setContent(content);
-    }
+⸻
 
-    private void showToast(StackPane root, String message) {
-        Label toast = new Label(message);
-        toast.setStyle("-fx-background-color: black; -fx-text-fill: white; -fx-padding: 8px 16px; -fx-background-radius: 8px;");
-        toast.setOpacity(1.0);
-
-        StackPane.setAlignment(toast, Pos.BOTTOM_CENTER);
-        root.getChildren().add(toast);
-
-        PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-        pause.setOnFinished(event -> {
-            FadeTransition fade = new FadeTransition(Duration.seconds(0.3), toast);
-            fade.setToValue(0.0);
-            fade.setOnFinished(e -> root.getChildren().remove(toast));
-            fade.play();
-        });
-        pause.play();
-    }
-}
+준비되면 바로 C DLL 코드와 바인딩 Java 예제까지 만들어드리겠습니다.
