@@ -1,24 +1,13 @@
-<build>
-    <plugins>
-        <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.8</version>
-            <executions>
-                <execution>
-                    <phase>install</phase>
-                    <configuration>
-                        <target>
-                            <exec executable="cmd">
-                                <arg value="/c"/>
-                                <arg value="deploy.bat"/>
-                            </exec>
-                        </target>
-                    </configuration>
-                    <goals>
-                        <goal>run</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
+@echo off
+set "KEY_PATH=C:\Keys\server_key"  REM 실제 키 경로로 수정
+set "USER=%USERNAME%"
+
+echo [1] 기존 권한 제거...
+icacls "%KEY_PATH%" /inheritance:r >nul
+icacls "%KEY_PATH%" /remove:g *S-1-1-0 >nul  2>nul  REM 모든 사용자 제거 시도
+
+echo [2] 현재 사용자에 읽기 권한 부여...
+icacls "%KEY_PATH%" /grant:r "%USER%:R" >nul
+
+echo [3] 설정 완료. 현재 권한:
+icacls "%KEY_PATH%"
