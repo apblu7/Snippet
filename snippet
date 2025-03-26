@@ -1,23 +1,20 @@
 @echo off
+set "PROJECT_NAME=ets"
+set "DEPLOY_PATH=/home/ubuntu"
+set "KEY_PATH=C:\Keys\server_key"
 set "SERVER=ubuntu@10.110.30.50"
-set "WAR_FILE=ets.war"
-set "REMOTE_DIR=/home/ubuntu"
-set "PPK_PATH=server_key.ppk"
 
-echo [Step 1] Copying WAR file to remote server...
-pscp -i "%PPK_PATH%" "%WAR_FILE%" %SERVER%:"%REMOTE_DIR%/"
+echo [Step 3] Backing up deployed file...
+
+ssh -i "%KEY_PATH%" %SERVER% ^
+"TIMESTAMP=$(date +%%Y%%m%%d-%%H%%M%%S) && \
+ BACKUP_DIR=/home/deploy/${TIMESTAMP}-%PROJECT_NAME% && \
+ mkdir -p $BACKUP_DIR && \
+ cp %DEPLOY_PATH%/%PROJECT_NAME%.war $BACKUP_DIR/"
 
 if %errorlevel% neq 0 (
-    echo [Error] Failed to copy WAR file to remote server.
+    echo [Error] Failed to back up deployed file.
     exit /b 1
 )
 
-echo [Step 2] Verifying uploaded file...
-plink -i "%PPK_PATH%" %SERVER% "ls -lh '%REMOTE_DIR%/%WAR_FILE%'"
-
-if %errorlevel% neq 0 (
-    echo [Error] Failed to verify WAR file on remote server.
-    exit /b 1
-)
-
-echo [Success] WAR file has been copied and verified.
+echo [Success] Backup completed.
