@@ -6,18 +6,15 @@ set "DEPLOY_PATH=/home/ubuntu"
 set "KEY_PATH=C:\Keys\server_key"
 set "SERVER=ubuntu@10.110.30.50"
 
-echo [Step 3] Backing up deployed file on server...
+echo [Step 3] Preparing remote backup command...
 
-REM SSH 명령어를 문자열로 만들기
-set CMD=timestamp=$(date +%%Y%%m%%d-%%H%%M%%S) && backup_dir=/home/deploy/!timestamp!-%PROJECT_NAME% && mkdir -p !backup_dir! && cp %DEPLOY_PATH%/%PROJECT_NAME%.war !backup_dir!
+REM 여기에 직접 문자열 넣기 (Delayed Expansion 사용 안 함)
+set CMD=timestamp=$(date +%%Y%%m%%d-%%H%%M%%S) && backup_dir=/home/deploy/!timestamp!-%PROJECT_NAME% && mkdir -p $backup_dir && cp %DEPLOY_PATH%/%PROJECT_NAME%.war $backup_dir && echo $backup_dir
 
-REM 명령 실행
-ssh -i "%KEY_PATH%" %SERVER% "!CMD!"
+echo [Debug] SSH command to execute:
+echo %CMD%
 
-if %errorlevel% neq 0 (
-    echo [Error] Backup failed on remote server.
-    exit /b 1
-)
+REM 실제 실행은 echo로 대체 (테스트용)
+ssh -i "%KEY_PATH%" %SERVER% "%CMD%"
 
-echo [Success] Backup completed.
 endlocal
