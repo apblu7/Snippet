@@ -1,1 +1,11 @@
-ssh -i "%KEY_PATH%" %SERVER% "sudo mv %DEPLOY_PATH%/%PROJECT_NAME%.war %FINAL_DEPLOY_DIR%/%PROJECT_NAME%.war" 2>&1
+set "FINAL_DEPLOY_DIR=/opt/ets"
+
+echo [Step 5] Moving WAR file to deployment directory...
+ssh -i "%KEY_PATH%" %SERVER% "sudo mv -f %DEPLOY_PATH%/%PROJECT_NAME%.war %FINAL_DEPLOY_DIR%/"
+
+if %errorlevel% neq 0 (
+    echo [Error] Failed to move WAR file to %FINAL_DEPLOY_DIR%
+    exit /b 1
+)
+
+echo [Success] WAR file moved to %FINAL_DEPLOY_DIR%
