@@ -1,23 +1,24 @@
-@echo off
-set SERVER=ubuntu@10.110.30.50
-set WAR_FILE=ets.war
-set REMOTE_DIR=/home/ubuntu
-set PPK_PATH=server_key.ppk
-
-echo [1] WAR 파일 복사 중...
-pscp -i "%PPK_PATH%" "%WAR_FILE%" %SERVER%:%REMOTE_DIR%/
-
-if %errorlevel% neq 0 (
-    echo [오류] 파일 복사 실패
-    exit /b 1
-)
-
-echo [2] 서버 접속 후 파일 확인...
-plink -i "%PPK_PATH%" %SERVER% "ls -lh %REMOTE_DIR%/%WAR_FILE%"
-
-if %errorlevel% neq 0 (
-    echo [오류] 복사된 파일 확인 실패
-    exit /b 1
-)
-
-echo [완료] WAR 파일 복사 및 확인 완료
+<build>
+    <plugins>
+        <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.8</version>
+            <executions>
+                <execution>
+                    <phase>install</phase>
+                    <configuration>
+                        <target>
+                            <exec executable="cmd">
+                                <arg value="/c"/>
+                                <arg value="deploy.bat"/>
+                            </exec>
+                        </target>
+                    </configuration>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
