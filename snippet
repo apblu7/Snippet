@@ -1,20 +1,23 @@
 @echo off
+setlocal enabledelayedexpansion
+
 set "PROJECT_NAME=ets"
 set "DEPLOY_PATH=/home/ubuntu"
 set "KEY_PATH=C:\Keys\server_key"
 set "SERVER=ubuntu@10.110.30.50"
 
-echo [Step 3] Backing up deployed file...
+echo [Step 3] Backing up deployed file on server...
 
-ssh -i "%KEY_PATH%" %SERVER% ^
-"TIMESTAMP=$(date +%%Y%%m%%d-%%H%%M%%S) && \
- BACKUP_DIR=/home/deploy/${TIMESTAMP}-%PROJECT_NAME% && \
- mkdir -p $BACKUP_DIR && \
- cp %DEPLOY_PATH%/%PROJECT_NAME%.war $BACKUP_DIR/"
+REM SSH 명령어를 문자열로 만들기
+set CMD=timestamp=$(date +%%Y%%m%%d-%%H%%M%%S) && backup_dir=/home/deploy/!timestamp!-%PROJECT_NAME% && mkdir -p !backup_dir! && cp %DEPLOY_PATH%/%PROJECT_NAME%.war !backup_dir!
+
+REM 명령 실행
+ssh -i "%KEY_PATH%" %SERVER% "!CMD!"
 
 if %errorlevel% neq 0 (
-    echo [Error] Failed to back up deployed file.
+    echo [Error] Backup failed on remote server.
     exit /b 1
 )
 
 echo [Success] Backup completed.
+endlocal
