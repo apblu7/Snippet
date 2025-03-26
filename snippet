@@ -6,25 +6,25 @@ set "DEPLOY_PATH=/home/ubuntu"
 set "KEY_PATH=C:\Keys\server_key"
 set "SERVER=ubuntu@10.110.30.50"
 
-echo [Step 3] Creating backup directory on server...
-ssh -i "%KEY_PATH%" %SERVER% "timestamp=$(date +%%Y%%m%%d-%%H%%M%%S) && mkdir -p /home/deploy/${timestamp}-%PROJECT_NAME% && echo /home/deploy/${timestamp}-%PROJECT_NAME%" > tmp_backup_path.txt
+REM 타임스탬프 생성
+for /f %%i in ('powershell -Command "Get-Date -Format yyyyMMdd-HHmmss"') do set "TIMESTAMP=%%i"
+set "BACKUP_DIR=/home/deploy/%TIMESTAMP%-%PROJECT_NAME%"
+
+echo [Step 3] Creating backup directory: %BACKUP_DIR%
+ssh -i "%KEY_PATH%" %SERVER% "sudo mkdir -p '%BACKUP_DIR%' && sudo chmod 755 '%BACKUP_DIR%' && echo '[Server] Created: %BACKUP_DIR%'"
 
 if %errorlevel% neq 0 (
     echo [Error] Failed to create backup directory.
     exit /b 1
 )
 
-set /p BACKUP_PATH=<tmp_backup_path.txt
-echo [Debug] Backup path is: %BACKUP_PATH%
-
-echo [Step 4] Copying deployed file to backup directory...
-ssh -i "%KEY_PATH%" %SERVER% "cp %DEPLOY_PATH%/%PROJECT_NAME%.war %BACKUP_PATH%/"
+echo [Step 4] Copying file to backup directory...
+ssh -i "%KEY_PATH%" %SERVER% "sudo cp %DEPLOY_PATH%/%PROJECT_NAME%.war %BACKUP_DIR%/ && echo '[Server] Copied to: %BACKUP_DIR%/%PROJECT_NAME%.war'"
 
 if %errorlevel% neq 0 (
-    echo [Error] Failed to copy file to backup directory.
+    echo [Error] Failed to copy file to backup location.
     exit /b 1
 )
 
-echo [Success] File backed up to %BACKUP_PATH%
-del tmp_backup_path.txt
+echo [Success] Backup complete: %BACKUP_DIR%
 endlocal
