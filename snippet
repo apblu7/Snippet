@@ -1,11 +1,25 @@
-set "FINAL_DEPLOY_DIR=/opt/ets"
-
-echo [Step 5] Moving WAR file to deployment directory...
-ssh -i "%KEY_PATH%" %SERVER% "sudo mv -f %DEPLOY_PATH%/%PROJECT_NAME%.war %FINAL_DEPLOY_DIR%/"
-
-if %errorlevel% neq 0 (
-    echo [Error] Failed to move WAR file to %FINAL_DEPLOY_DIR%
-    exit /b 1
-)
-
-echo [Success] WAR file moved to %FINAL_DEPLOY_DIR%
+<build>
+    <plugins>
+        <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.8</version>
+            <executions>
+                <execution>
+                    <id>run-deploy-bat</id>
+                    <phase>install</phase> <!-- 또는 package -->
+                    <configuration>
+                        <target>
+                            <exec executable="cmd">
+                                <arg value="/c"/>
+                                <arg value="${basedir}\deploy\deploy.bat"/>
+                            </exec>
+                        </target>
+                    </configuration>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
