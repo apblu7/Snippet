@@ -1,6 +1,6 @@
-import org.springframework.web.util.UriComponentsBuilder;
-
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,40 +32,23 @@ public class UriBuilder {
     }
 
     public URI build() {
-        // base URL에서 ? 기준으로 분리
-        String[] parts = baseUrl.split("\\?", 2);
-        String base = parts[0];
-        String existingQuery = parts.length > 1 ? parts[1] : null;
+        StringBuilder finalUrl = new StringBuilder(baseUrl);
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(base);
-
-        StringBuilder rawQuery = new StringBuilder();
-        if (existingQuery != null && !existingQuery.isEmpty()) {
-            rawQuery.append(existingQuery);
-        }
+        boolean firstParam = true;
 
         for (Map.Entry<String, Param> entry : params.entrySet()) {
             String key = entry.getKey();
             Param param = entry.getValue();
 
-            if (param.encode) {
-                builder.queryParam(key, param.value);
-            } else {
-                if (rawQuery.length() > 0) rawQuery.append("&");
-                rawQuery.append(key).append("=").append(param.value);
-            }
+            String encodedValue = param.encode
+                    ? URLEncoder.encode(param.value, StandardCharsets.UTF_8)
+                    : param.value;
+
+            finalUrl.append(firstParam ? "?" : "&");
+            finalUrl.append(key).append("=").append(encodedValue);
+            firstParam = false;
         }
 
-        String encodedPart = builder.build().encode().toUriString();
-
-        if (rawQuery.length() > 0) {
-            if (encodedPart.contains("?")) {
-                return URI.create(encodedPart + "&" + rawQuery);
-            } else {
-                return URI.create(encodedPart + "?" + rawQuery);
-            }
-        } else {
-            return URI.create(encodedPart);
-        }
+        return URI.create(finalUrl.toString());
     }
 }
