@@ -1,12 +1,10 @@
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class UriBuilderUtil {
+public class UriBuilder {
     private final String baseUrl;
     private final Map<String, Param> params = new LinkedHashMap<>();
 
@@ -20,22 +18,31 @@ public class UriBuilderUtil {
         }
     }
 
-    private UriBuilderUtil(String baseUrl) {
+    private UriBuilder(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
-    public static UriBuilderUtil from(String baseUrl) {
-        return new UriBuilderUtil(baseUrl);
+    public static UriBuilder from(String baseUrl) {
+        return new UriBuilder(baseUrl);
     }
 
-    public UriBuilderUtil addParam(String key, String value, boolean encode) {
+    public UriBuilder addParam(String key, String value, boolean encode) {
         params.put(key, new Param(value, encode));
         return this;
     }
 
     public URI build() {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl);
+        // base URL에서 ? 기준으로 분리
+        String[] parts = baseUrl.split("\\?", 2);
+        String base = parts[0];
+        String existingQuery = parts.length > 1 ? parts[1] : null;
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(base);
+
         StringBuilder rawQuery = new StringBuilder();
+        if (existingQuery != null && !existingQuery.isEmpty()) {
+            rawQuery.append(existingQuery);
+        }
 
         for (Map.Entry<String, Param> entry : params.entrySet()) {
             String key = entry.getKey();
@@ -44,20 +51,21 @@ public class UriBuilderUtil {
             if (param.encode) {
                 builder.queryParam(key, param.value);
             } else {
-                rawQuery.append("&").append(key).append("=").append(param.value);
+                if (rawQuery.length() > 0) rawQuery.append("&");
+                rawQuery.append(key).append("=").append(param.value);
             }
         }
 
-        String base = builder.build().encode().toUriString();
+        String encodedPart = builder.build().encode().toUriString();
 
         if (rawQuery.length() > 0) {
-            if (!base.contains("?")) {
-                base += "?";
-                rawQuery.deleteCharAt(0); // 첫 & 제거
+            if (encodedPart.contains("?")) {
+                return URI.create(encodedPart + "&" + rawQuery);
+            } else {
+                return URI.create(encodedPart + "?" + rawQuery);
             }
-            base += rawQuery.toString();
+        } else {
+            return URI.create(encodedPart);
         }
-
-        return URI.create(base);
     }
 }
