@@ -1,12 +1,11 @@
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class UriBuilder {
     private final String baseUrl;
-    private final Map<String, Param> params = new LinkedHashMap<>();
+    private final Map<String, List<Param>> paramMap = new LinkedHashMap<>();
 
     private static class Param {
         String value;
@@ -26,27 +25,51 @@ public class UriBuilder {
         return new UriBuilder(baseUrl);
     }
 
-    public UriBuilder addParam(String key, String value, boolean encode) {
-        params.put(key, new Param(value, encode));
+    // 1. T value (null 무시) + encode 여부
+    public <T> UriBuilder addParam(String key, T value, boolean encode) {
+        if (value == null) return this;
+        return addParam(key, value.toString(), encode);
+    }
+
+    // 2. T value (null 무시) + encode 기본 true
+    public <T> UriBuilder addParam(String key, T value) {
+        return addParam(key, value, true);
+    }
+
+    // 3. Optional<T> + encode 여부
+    public <T> UriBuilder addParam(String key, Optional<T> optionalValue, boolean encode) {
+        optionalValue.ifPresent(val -> addParam(key, val.toString(), encode));
+        return this;
+    }
+
+    // 4. Optional<T> + encode 기본 true
+    public <T> UriBuilder addParam(String key, Optional<T> optionalValue) {
+        return addParam(key, optionalValue, true);
+    }
+
+    // 내부용 String 추가
+    private UriBuilder addParam(String key, String value, boolean encode) {
+        if (value == null || value.isEmpty()) return this;
+        paramMap.computeIfAbsent(key, k -> new ArrayList<>())
+                .add(new Param(value, encode));
         return this;
     }
 
     public URI build() {
         StringBuilder finalUrl = new StringBuilder(baseUrl);
+        boolean first = true;
 
-        boolean firstParam = true;
-
-        for (Map.Entry<String, Param> entry : params.entrySet()) {
+        for (Map.Entry<String, List<Param>> entry : paramMap.entrySet()) {
             String key = entry.getKey();
-            Param param = entry.getValue();
+            for (Param param : entry.getValue()) {
+                String encodedValue = param.encode
+                        ? URLEncoder.encode(param.value, StandardCharsets.UTF_8)
+                        : param.value;
 
-            String encodedValue = param.encode
-                    ? URLEncoder.encode(param.value, StandardCharsets.UTF_8)
-                    : param.value;
-
-            finalUrl.append(firstParam ? "?" : "&");
-            finalUrl.append(key).append("=").append(encodedValue);
-            firstParam = false;
+                finalUrl.append(first ? "?" : "&");
+                finalUrl.append(key).append("=").append(encodedValue);
+                first = false;
+            }
         }
 
         return URI.create(finalUrl.toString());
