@@ -1,1 +1,35 @@
-org.apache.maven.plugins:maven-antrun-plugin:1.8:run@run-deploy-bat
+public class UriUtil {
+
+    public static URI buildUriWithParams(String baseUrl, Map<String, String> params, Set<String> noEncodeKeys) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl);
+
+        StringBuilder rawQuery = new StringBuilder();
+
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (noEncodeKeys.contains(key)) {
+                // 나중에 수동으로 붙이기 위해 저장
+                rawQuery.append("&").append(key).append("=").append(value);
+            } else {
+                // 자동 인코딩
+                builder.queryParam(key, value);
+            }
+        }
+
+        // 자동 인코딩된 부분만 우선 생성
+        String encodedPart = builder.build().encode().toUriString();
+
+        // 수동 파라미터가 있다면 붙이기
+        if (rawQuery.length() > 0) {
+            if (!encodedPart.contains("?")) {
+                encodedPart += "?";
+                rawQuery.deleteCharAt(0); // 첫 & 제거
+            }
+            encodedPart += rawQuery.toString();
+        }
+
+        return URI.create(encodedPart);
+    }
+}
