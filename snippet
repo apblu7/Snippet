@@ -1,1 +1,15 @@
-toString
+public int parseOrDefault(Object input, int defaultValue) {
+    try {
+        return Integer.parseInt(input.toString());
+    } catch (Exception e) {
+        return defaultValue;
+    }
+}
+
+public void useTwoInts(Object a, Object b) {
+    int val1 = parseOrDefault(a, 0);
+    int val2 = parseOrDefault(b, 0);
+
+    // 로직 처리
+    System.out.println("val1: " + val1 + ", val2: " + val2);
+}
