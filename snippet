@@ -1,1 +1,11 @@
-+
+import java.util.Properties;
+import java.util.stream.Collectors;
+
+public class PropertiesFilter {
+    public static String getWinitechEtsProperties(Properties properties) {
+        return properties.stringPropertyNames().stream()
+                .filter(key -> key.startsWith("winitech.ets"))
+                .map(key -> key + " : " + properties.getProperty(key))
+                .collect(Collectors.joining("\n"));
+    }
+}
