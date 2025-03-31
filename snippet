@@ -5,6 +5,7 @@ public class PropertiesFilter {
     public static String getWinitechEtsProperties(Properties properties) {
         return properties.stringPropertyNames().stream()
                 .filter(key -> key.startsWith("winitech.ets"))
+                .sorted()
                 .map(key -> key + " : " + properties.getProperty(key))
                 .collect(Collectors.joining("\n"));
     }
