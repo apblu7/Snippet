@@ -1,9 +1,1 @@
-  
-    private void showTemporaryMessage() {
-        new Thread(() -> {
-            try {
-                Thread.sleep(2000);
-                Platform.runLater(() -> textArea.clear());
-            } catch (InterruptedException ignored) {}
-        }).start();
-    }
++
