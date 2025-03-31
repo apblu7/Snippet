@@ -1,1 +1,26 @@
-resources:copy-resources -Dlocal.resources=true
+antrun:run@delete-config-folder-on-demand resources:resources -P local
+
+
+<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-antrun-plugin</artifactId>
+			    <version>3.1.0</version>
+			    <executions>
+			        <execution>
+			            <id>delete-config-folder-on-demand</id>
+			            <phase>none</phase>
+			            <goals>
+			                <goal>run</goal>
+			            </goals>
+			            <configuration>
+			                <target>
+			                    <echo>Deleting ${project.build.outputDirectory}/egovframework/egovProps on demand...</echo>
+			                    <delete dir="${project.build.outputDirectory}/egovframework/egovProps" failonerror="false" />
+			                </target>
+			            </configuration>
+			        </execution>
+			    </executions>
+			</plugin>
+
+
+이 조합으로 잘 됐어 고마워
