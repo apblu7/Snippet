@@ -1,68 +1,10 @@
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+@Data
+@Schema(description = "사용자 검색 요청 DTO")
+public class SearchUserRequest {
 
-import java.io.*;
-import java.util.Properties;
+    @Schema(description = "사용자 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+    private Long id;
 
-public class ClipboardApp extends Application {
-    private Stage primaryStage;
-    private static final String CONFIG_FILE = "config.properties";
-    
-    @Override
-    public void start(Stage stage) {
-        this.primaryStage = stage;
-        
-        TextArea textArea = new TextArea();
-        textArea.setPrefSize(400, 300);
-        
-        Button loadButton = new Button("Load Data");
-        loadButton.setOnAction(event -> textArea.setText("Sample Loaded Text"));
-        
-        VBox root = new VBox(10, textArea, loadButton);
-        Scene scene = new Scene(root, 400, 300);
-        
-        stage.setScene(scene);
-        stage.setTitle("Clipboard App");
-        loadWindowPosition(stage);
-        stage.show();
-    }
-    
-    private void saveWindowPosition(Stage stage) {
-        Properties props = new Properties();
-        props.setProperty("x", String.valueOf(stage.getX()));
-        props.setProperty("y", String.valueOf(stage.getY()));
-        
-        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
-            props.store(out, "Window Position");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private void loadWindowPosition(Stage stage) {
-        Properties props = new Properties();
-        try (FileInputStream in = new FileInputStream(CONFIG_FILE)) {
-            props.load(in);
-            double x = Double.parseDouble(props.getProperty("x", "100"));
-            double y = Double.parseDouble(props.getProperty("y", "100"));
-            stage.setX(x);
-            stage.setY(y);
-        } catch (IOException e) {
-            stage.setX(100);
-            stage.setY(100);
-        }
-    }
-    
-    @Override
-    public void stop() {
-        saveWindowPosition(primaryStage);
-    }
-    
-    public static void main(String[] args) {
-        launch(args);
-    }
+    @Schema(description = "사용자 이메일", example = "hong@example.com")
+    private String email;
 }
