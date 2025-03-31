@@ -1,10 +1,9 @@
-@Data
-@Schema(description = "사용자 검색 요청 DTO")
-public class SearchUserRequest {
-
-    @Schema(description = "사용자 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-    private Long id;
-
-    @Schema(description = "사용자 이메일", example = "hong@example.com")
-    private String email;
-}
+  
+    private void showTemporaryMessage() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                Platform.runLater(() -> textArea.clear());
+            } catch (InterruptedException ignored) {}
+        }).start();
+    }
