@@ -1,26 +1,68 @@
-antrun:run@delete-config-folder-on-demand resources:resources -P local
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
+import java.io.*;
+import java.util.Properties;
 
-<plugin>
-			    <groupId>org.apache.maven.plugins</groupId>
-			    <artifactId>maven-antrun-plugin</artifactId>
-			    <version>3.1.0</version>
-			    <executions>
-			        <execution>
-			            <id>delete-config-folder-on-demand</id>
-			            <phase>none</phase>
-			            <goals>
-			                <goal>run</goal>
-			            </goals>
-			            <configuration>
-			                <target>
-			                    <echo>Deleting ${project.build.outputDirectory}/egovframework/egovProps on demand...</echo>
-			                    <delete dir="${project.build.outputDirectory}/egovframework/egovProps" failonerror="false" />
-			                </target>
-			            </configuration>
-			        </execution>
-			    </executions>
-			</plugin>
-
-
-이 조합으로 잘 됐어 고마워
+public class ClipboardApp extends Application {
+    private Stage primaryStage;
+    private static final String CONFIG_FILE = "config.properties";
+    
+    @Override
+    public void start(Stage stage) {
+        this.primaryStage = stage;
+        
+        TextArea textArea = new TextArea();
+        textArea.setPrefSize(400, 300);
+        
+        Button loadButton = new Button("Load Data");
+        loadButton.setOnAction(event -> textArea.setText("Sample Loaded Text"));
+        
+        VBox root = new VBox(10, textArea, loadButton);
+        Scene scene = new Scene(root, 400, 300);
+        
+        stage.setScene(scene);
+        stage.setTitle("Clipboard App");
+        loadWindowPosition(stage);
+        stage.show();
+    }
+    
+    private void saveWindowPosition(Stage stage) {
+        Properties props = new Properties();
+        props.setProperty("x", String.valueOf(stage.getX()));
+        props.setProperty("y", String.valueOf(stage.getY()));
+        
+        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+            props.store(out, "Window Position");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadWindowPosition(Stage stage) {
+        Properties props = new Properties();
+        try (FileInputStream in = new FileInputStream(CONFIG_FILE)) {
+            props.load(in);
+            double x = Double.parseDouble(props.getProperty("x", "100"));
+            double y = Double.parseDouble(props.getProperty("y", "100"));
+            stage.setX(x);
+            stage.setY(y);
+        } catch (IOException e) {
+            stage.setX(100);
+            stage.setY(100);
+        }
+    }
+    
+    @Override
+    public void stop() {
+        saveWindowPosition(primaryStage);
+    }
+    
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
