@@ -1,5 +1,10 @@
-<dependency>
-    <groupId>com.fasterxml.jackson.dataformat</groupId>
-    <artifactId>jackson-dataformat-xml</artifactId>
-    <version>2.15.0</version>
-</dependency>
+import java.lang.reflect.Field;
+
+public void testPrivateField() throws NoSuchFieldException, IllegalAccessException {
+    ServiceClass service = new ServiceClass();
+    Field privateField = ServiceClass.class.getDeclaredField("privateField");
+    privateField.setAccessible(true);  // private 필드에 접근 가능하도록 설정
+    privateField.set(service, "새로운 값");  // 필드 값 변경
+    
+    // 테스트 코드 작성
+}
