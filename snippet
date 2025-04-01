@@ -1,1 +1,11 @@
-new
+RestTemplate restTemplate = new RestTemplate();
+HttpHeaders headers = new HttpHeaders();
+headers.setContentType(MediaType.APPLICATION_JSON);
+
+HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+ResponseEntity<String> response = restTemplate.exchange(
+    "https://example.com/api",
+    HttpMethod.GET,
+    requestEntity,
+    String.class
+);
