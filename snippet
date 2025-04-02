@@ -1,29 +1,39 @@
-import org.springframework.web.client.ResourceAccessException;
-import java.net.SocketTimeoutException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import com.example.mapper.SckbdInfoMapper;
 
-String resultMsg = "";
+import java.util.List;
+import java.util.Map;
 
-try {
-    // HTTP request or network operation
-} catch (ResourceAccessException ex) {
-    Throwable cause = ex.getCause(); // Check the underlying exception
-    
-    // Handle SocketTimeoutException
-    if (cause instanceof SocketTimeoutException) {
-        resultMsg = "Timeout: Server did not respond in time.";
-    }
-    // Handle ConnectException
-    else if (cause instanceof ConnectException) {
-        resultMsg = "Connection failed: Unable to connect to the server.";
-    }
-    // Handle UnknownHostException
-    else if (cause instanceof UnknownHostException) {
-        resultMsg = "Unknown host: Cannot resolve the server address.";
-    }
-    // Handle other network-related exceptions
-    else {
-        resultMsg = "Network error: " + cause.getMessage();
+@Service
+@RequiredArgsConstructor
+public class SckbdInfoService {
+    private final RestTemplate restTemplate;
+    private final SckbdInfoMapper sckbdInfoMapper;
+    private final ObjectMapper objectMapper;
+
+    public void fetchAndSaveSckbdInfo() {
+        String apiUrl = "https://example.com/api/hospital-data"; // 실제 API URL
+
+        // API 호출
+        ResponseEntity<Object> responseEntity = restTemplate.getForEntity(apiUrl, Object.class);
+        if (responseEntity.getBody() == null) {
+            throw new RuntimeException("API 응답이 없습니다.");
+        }
+
+        // JSON을 Map 형태로 변환
+        Map<String, Object> responseMap = objectMapper.convertValue(responseEntity.getBody(), Map.class);
+
+        // "body" → "items" → "item" 추출
+        List<Map<String, Object>> items = (List<Map<String, Object>>)
+                ((Map<String, Object>) ((Map<String, Object>) responseMap.get("body")).get("items")).get("item");
+
+        // 데이터 저장 (MyBatis 호출)
+        for (Map<String, Object> item : items) {
+            sckbdInfoMapper.insertSckbdInfo(item);
+        }
     }
 }
