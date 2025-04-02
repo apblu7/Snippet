@@ -1,39 +1,53 @@
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import com.example.mapper.SckbdInfoMapper;
-
-import java.util.List;
-import java.util.Map;
-
-@Service
-@RequiredArgsConstructor
-public class SckbdInfoService {
-    private final RestTemplate restTemplate;
-    private final SckbdInfoMapper sckbdInfoMapper;
-    private final ObjectMapper objectMapper;
-
-    public void fetchAndSaveSckbdInfo() {
-        String apiUrl = "https://example.com/api/hospital-data"; // 실제 API URL
-
-        // API 호출
-        ResponseEntity<Object> responseEntity = restTemplate.getForEntity(apiUrl, Object.class);
-        if (responseEntity.getBody() == null) {
-            throw new RuntimeException("API 응답이 없습니다.");
-        }
-
-        // JSON을 Map 형태로 변환
-        Map<String, Object> responseMap = objectMapper.convertValue(responseEntity.getBody(), Map.class);
-
-        // "body" → "items" → "item" 추출
-        List<Map<String, Object>> items = (List<Map<String, Object>>)
-                ((Map<String, Object>) ((Map<String, Object>) responseMap.get("body")).get("items")).get("item");
-
-        // 데이터 저장 (MyBatis 호출)
-        for (Map<String, Object> item : items) {
-            sckbdInfoMapper.insertSckbdInfo(item);
-        }
-    }
-}
+<insert id="insertSckbdInfo">
+    INSERT INTO sckbd_info (
+        inst_id, 
+        inst_nm, 
+        emrm_gnl_sckbd_cnt, 
+        emrm_spcl_sckbd_cnt, 
+        emrm_clex_sckbd_cnt, 
+        gnl_sckbd_cnt, 
+        spcl_sckbd_cnt, 
+        clex_sckbd_cnt, 
+        surgrm_cnt, 
+        venti_avl_yn, 
+        venti_cnt, 
+        ecmo_avl_yn, 
+        ecmo_cnt, 
+        ct_avl_yn, 
+        ct_cnt, 
+        mri_avl_yn, 
+        mri_cnt, 
+        angio_avl_yn, 
+        angio_cnt, 
+        dialysis_avl_yn, 
+        dialysis_cnt, 
+        burn_spatrm_cnt, 
+        reg_dt, 
+        mdfcn_dt
+    ) VALUES (
+        #{inst_id}, 
+        #{inst_nm}, 
+        #{emrm_gnl_sckbd_cnt}, 
+        #{emrm_spcl_sckbd_cnt}, 
+        #{emrm_clex_sckbd_cnt}, 
+        #{gnl_sckbd_cnt}, 
+        #{spcl_sckbd_cnt}, 
+        #{clex_sckbd_cnt}, 
+        #{surgrm_cnt}, 
+        #{venti_avl_yn}, 
+        #{venti_cnt}, 
+        #{ecmo_avl_yn}, 
+        #{ecmo_cnt}, 
+        #{ct_avl_yn}, 
+        #{ct_cnt}, 
+        #{mri_avl_yn}, 
+        #{mri_cnt}, 
+        #{angio_avl_yn}, 
+        #{angio_cnt}, 
+        #{dialysis_avl_yn}, 
+        #{dialysis_cnt}, 
+        #{burn_spatrm_cnt}, 
+        #{reg_dt}, 
+        #{mdfcn_dt}
+    );
+</insert>
