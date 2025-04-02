@@ -3,25 +3,27 @@ import java.net.SocketTimeoutException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 
+String resultMsg = "";
+
 try {
-    // HTTP 요청 수행
+    // HTTP request or network operation
 } catch (ResourceAccessException ex) {
-    Throwable cause = ex.getCause(); // 내부 예외를 확인
+    Throwable cause = ex.getCause(); // Check the underlying exception
     
-    // 타임아웃 예외 처리
+    // Handle SocketTimeoutException
     if (cause instanceof SocketTimeoutException) {
-        System.out.println("서버 응답 시간 초과: 서버가 응답을 기다리는 동안 시간이 초과되었습니다.");
+        resultMsg = "Timeout: Server did not respond in time.";
     }
-    // 연결 실패 예외 처리
+    // Handle ConnectException
     else if (cause instanceof ConnectException) {
-        System.out.println("서버와 연결할 수 없음: 서버가 다운되었거나 네트워크 연결에 문제가 있을 수 있습니다.");
+        resultMsg = "Connection failed: Unable to connect to the server.";
     }
-    // DNS 해석 실패 예외 처리
+    // Handle UnknownHostException
     else if (cause instanceof UnknownHostException) {
-        System.out.println("서버 주소를 찾을 수 없음: DNS 해석 오류로 인해 서버 주소를 찾을 수 없습니다.");
+        resultMsg = "Unknown host: Cannot resolve the server address.";
     }
-    // 기타 네트워크 관련 오류 처리
+    // Handle other network-related exceptions
     else {
-        System.out.println("네트워크 오류 발생: " + cause.getMessage());
+        resultMsg = "Network error: " + cause.getMessage();
     }
 }
