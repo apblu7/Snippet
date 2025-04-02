@@ -1,100 +1,27 @@
-아하, 이해했습니다. 원래는 다양한 형식을 처리하는 프록시였고, 지금은 Spring 환경에서 **JSON 또는 XML 형식의 응답을 받아서 내용을 수정하지 않고 그대로 클라이언트에게 다시 전달(pass-through)**하는 역할을 하도록 만들고 싶으신 거군요. 즉, Spring이 응답 내용을 특정 Java 객체로 변환(deserialize)하거나 다시 특정 형식으로 변환(serialize)하는 과정을 거치지 않고, 받은 데이터 그대로 내보내는 것이 목표입니다.
-이전의 ResponseEntity<org.springframework.core.io.Resource> 방식이 실패한 이유는 앞서 설명드렸듯이, 최신 Spring이 클라이언트의 Accept 헤더(application/json 또는 application/xml)와 서버의 반환 타입(Resource) 간의 매칭을 엄격하게 보기 때문입니다. ResourceHttpMessageConverter는 주로 파일 스트리밍용이지, JSON/XML pass-through를 위한 표준적인 방법은 아닙니다.
-JSON/XML 내용을 그대로 통과시키는 가장 좋은 방법은 응답 본문을 byte[]로 처리하는 것입니다.
-이유:
- * 인코딩 문제 방지: 응답 본문을 String으로 변환하면 중간에 문자 인코딩 변환이 일어나 원본 데이터가 깨질 위험이 있습니다. byte[]는 원본 데이터를 그대로 유지합니다.
- * Spring의 처리: Spring에는 ByteArrayHttpMessageConverter가 기본적으로 활성화되어 있습니다. 이 컨버터는 byte[] 타입의 응답 본문을 받으면, 별도의 변환 없이 헤더에 지정된 Content-Type과 함께 바이트 스트림을 그대로 클라이언트에게 전달합니다.
-구현 방법:
- * 백엔드(실제 서비스를 호출하는 부분) 로직:
-   * RestTemplate, WebClient 등을 사용하여 실제 서비스(JSON 또는 XML을 제공하는 곳)를 호출합니다.
-   * 중요: 이때 응답 본문을 String이나 특정 객체가 아닌 **byte[]**로 받도록 요청해야 합니다.
-   * 백엔드 서비스의 응답 헤더에서 **Content-Type 값 (예: "application/json" 또는 "application/xml")**을 반드시 가져옵니다.
- * Spring Controller 로직:
-   * 컨트롤러 메소드는 백엔드로부터 받은 byte[]와 Content-Type을 사용하여 ResponseEntity<byte[]>를 생성하여 반환합니다.
-   * @RequestMapping, @GetMapping 등의 어노테이션에 produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}를 명시하여, 이 엔드포인트가 JSON과 XML 요청(Accept 헤더)을 처리할 수 있음을 Spring에게 알려줍니다. (이것이 있어야 Spring이 HttpMediaTypeNotAcceptableException을 발생시키지 않습니다.)
-예시 코드 (개념 설명):
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate; // 또는 WebClient 사용
+import org.springframework.web.client.ResourceAccessException;
+import java.net.SocketTimeoutException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 
-@RestController
-public class ProxyController {
-
-    private final RestTemplate restTemplate;
-
-    public ProxyController(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+try {
+    // HTTP 요청 수행
+} catch (ResourceAccessException ex) {
+    Throwable cause = ex.getCause(); // 내부 예외를 확인
+    
+    // 타임아웃 예외 처리
+    if (cause instanceof SocketTimeoutException) {
+        System.out.println("서버 응답 시간 초과: 서버가 응답을 기다리는 동안 시간이 초과되었습니다.");
     }
-
-    // 예시: GET 요청을 프록시하는 경우
-    // 실제로는 POST, PUT 등 다른 메소드와 요청 파라미터/헤더 처리도 필요할 수 있음
-    @GetMapping(value = "/proxy-pass/**", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-    public ResponseEntity<byte[]> proxyGetRequest(HttpServletRequest request) {
-
-        // 1. 실제 백엔드 URL 및 요청 정보 구성 (request 객체에서 경로, 파라미터 등 추출)
-        String backendUrl = buildBackendUrl(request); // 실제 백엔드 URL 생성 로직
-        HttpMethod method = HttpMethod.GET; // 또는 request.getMethod() 사용
-
-        // 필요한 경우 요청 헤더도 전달
-        HttpHeaders requestHeaders = captureRequestHeaders(request);
-        HttpEntity<Void> requestEntity = new HttpEntity<>(requestHeaders);
-
-        try {
-            // 2. 백엔드 호출 및 응답을 byte[]로 받기
-            ResponseEntity<byte[]> backendResponse = restTemplate.exchange(
-                    backendUrl,
-                    method,
-                    requestEntity,
-                    byte[].class // *** 응답 본문을 byte[]로 받음 ***
-            );
-
-            // 3. 백엔드 응답 헤더에서 Content-Type 가져오기
-            MediaType originalContentType = backendResponse.getHeaders().getContentType();
-            HttpStatus originalStatus = backendResponse.getStatusCode(); // 상태 코드도 가져오기
-
-            // 4. 클라이언트에게 전달할 응답 헤더 설정
-            HttpHeaders responseHeaders = new HttpHeaders();
-            if (originalContentType != null) {
-                responseHeaders.setContentType(originalContentType); // *** 원본 Content-Type 설정 ***
-            }
-            // 필요시 다른 백엔드 헤더도 전달 (Cache-Control 등)
-            // responseHeaders.putAll(backendResponse.getHeaders()); // 주의: 모든 헤더 전달 시 보안 문제 없는지 확인
-
-            // 5. ResponseEntity<byte[]> 생성 및 반환
-            return new ResponseEntity<>(backendResponse.getBody(), responseHeaders, originalStatus);
-
-        } catch (HttpClientErrorException e) {
-            // 백엔드 에러 처리 (에러 응답도 그대로 전달)
-            HttpHeaders errorHeaders = new HttpHeaders();
-            errorHeaders.setContentType(e.getResponseHeaders().getContentType());
-            return new ResponseEntity<>(e.getResponseBodyAsByteArray(), errorHeaders, e.getStatusCode());
-        } catch (Exception e) {
-            // 기타 예외 처리
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage().getBytes());
-        }
+    // 연결 실패 예외 처리
+    else if (cause instanceof ConnectException) {
+        System.out.println("서버와 연결할 수 없음: 서버가 다운되었거나 네트워크 연결에 문제가 있을 수 있습니다.");
     }
-
-    // --- Helper 메소드 (실제 구현 필요) ---
-    private String buildBackendUrl(HttpServletRequest request) {
-        // request.getRequestURI(), request.getQueryString() 등을 사용하여 실제 백엔드 URL 조합
-        String requestPath = request.getRequestURI().substring("/proxy-pass".length()); // 프록시 경로 제외
-        String queryString = request.getQueryString();
-        String backendBaseUrl = "http://actual-backend.com"; // 실제 백엔드 주소
-        return backendBaseUrl + requestPath + (queryString != null ? "?" + queryString : "");
+    // DNS 해석 실패 예외 처리
+    else if (cause instanceof UnknownHostException) {
+        System.out.println("서버 주소를 찾을 수 없음: DNS 해석 오류로 인해 서버 주소를 찾을 수 없습니다.");
     }
-
-    private HttpHeaders captureRequestHeaders(HttpServletRequest request) {
-        HttpHeaders headers = new HttpHeaders();
-        // 필요한 헤더만 선별적으로 전달 (예: Accept, Authorization 등)
-        // Enumeration<String> headerNames = request.getHeaderNames(); ...
-        return headers;
+    // 기타 네트워크 관련 오류 처리
+    else {
+        System.out.println("네트워크 오류 발생: " + cause.getMessage());
     }
 }
-
-핵심 요약:
- * 백엔드 응답은 byte[]로 받으세요.
- * 백엔드 응답의 Content-Type 헤더 값을 꼭 확인하세요.
- * Spring Controller에서는 ResponseEntity<byte[]>를 반환하세요.
- * 반환하는 ResponseEntity의 헤더에 원본 Content-Type을 설정하세요.
- * Controller 메소드 어노테이션에 produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}를 추가하여 해당 타입 요청을 처리할 수 있음을 명시하세요.
-이 방식을 사용하면 Spring MVC 프레임워크 내에서 JSON/XML 데이터를 수정 없이 그대로 전달하는 프록시 역할을 효율적으로 구현할 수 있습니다.
