@@ -1,39 +1,20 @@
-import java.util.*;
-import java.util.stream.Collectors;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
-class DTO {
-    String key;
-    String value;
+import java.time.LocalDateTime;
 
-    public DTO(String key, String value) {
-        this.key = key;
-        this.value = value;
+@Component
+public class MyScheduler {
+
+    // 매일 00:00 (한국 시간) 실행
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    public void runDailyJob() {
+        System.out.println("매일 자정 실행됨: " + LocalDateTime.now());
     }
 
-    public String getKey() {
-        return key;
-    }
-}
-
-public class UpsertExample {
-    public static void main(String[] args) {
-        Set<String> existingKeys = Set.of("A", "B", "C"); // DB 조회 결과
-        List<DTO> dtos = new ArrayList<>(List.of(
-            new DTO("A", "data1"),
-            new DTO("D", "data2"),
-            new DTO("B", "data3"),
-            new DTO("E", "data4")
-        ));
-
-        // updateList를 먼저 추출
-        List<DTO> updateList = dtos.stream()
-            .filter(dto -> existingKeys.contains(dto.getKey()))
-            .collect(Collectors.toList());
-
-        // updateList를 제외한 나머지를 insertList로 저장
-        dtos.removeAll(updateList);
-
-        System.out.println("Update 대상: " + updateList.size());
-        System.out.println("Insert 대상: " + dtos.size()); // 원본 리스트에서 updateList 제외 후 insertList 역할
+    // 10분마다 (한국 시간 기준) 실행
+    @Scheduled(cron = "0 */10 * * * *", zone = "Asia/Seoul")
+    public void runEveryTenMinutesJob() {
+        System.out.println("10분마다 실행됨: " + LocalDateTime.now());
     }
 }
