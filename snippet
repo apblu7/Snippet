@@ -1,49 +1,39 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class JsonPagingExample {
-    public static void main(String[] args) {
-        ObjectMapper objectMapper = new ObjectMapper();
+class DTO {
+    String key;
+    String value;
 
-        int numOfRows = 0;   // 한 페이지당 가져올 데이터 개수
-        int totalCount = 0;  // 전체 데이터 개수
-        int pageNo = 0;      // 페이지 번호 (0부터 시작)
-
-        try {
-            do {
-                // API 응답 (실제 API 호출로 대체 가능)
-                String jsonResponse = getJsonResponse(pageNo);
-
-                // JSON 파싱
-                JsonNode rootNode = objectMapper.readTree(jsonResponse);
-                JsonNode bodyNode = rootNode.path("response").path("body");
-
-                // 필수값 pageNo 가져오기 (없으면 예외 발생)
-                if (!bodyNode.has("pageNo")) {
-                    throw new RuntimeException("Missing required field: pageNo");
-                }
-                pageNo = bodyNode.path("pageNo").asInt();
-
-                // 나머지 값 가져오기
-                numOfRows = bodyNode.path("numOfRows").asInt(0);
-                totalCount = bodyNode.path("totalCount").asInt(0);
-
-                // 데이터 처리 로직 (예: 리스트 저장, 출력)
-                System.out.println("Processing Page: " + pageNo);
-
-                // 다음 페이지 번호 증가
-                pageNo++;
-
-            } while (pageNo * numOfRows < totalCount); // 모든 데이터를 가져오면 종료
-        } catch (Exception e) {
-            System.err.println("Error occurred: " + e.getMessage());
-            // 롤백 로직 (필요하면 추가)
-        }
+    public DTO(String key, String value) {
+        this.key = key;
+        this.value = value;
     }
 
-    // 실제 API 요청을 대체하는 JSON 응답 예시
-    private static String getJsonResponse(int pageNo) {
-        return "{ \"response\": { \"body\": { "
-                + "\"numOfRows\": 10, \"pageNo\": " + pageNo + ", \"totalCount\": 35 } } }";
+    public String getKey() {
+        return key;
+    }
+}
+
+public class UpsertExample {
+    public static void main(String[] args) {
+        Set<String> existingKeys = Set.of("A", "B", "C"); // DB 조회 결과
+        List<DTO> dtos = new ArrayList<>(List.of(
+            new DTO("A", "data1"),
+            new DTO("D", "data2"),
+            new DTO("B", "data3"),
+            new DTO("E", "data4")
+        ));
+
+        // updateList를 먼저 추출
+        List<DTO> updateList = dtos.stream()
+            .filter(dto -> existingKeys.contains(dto.getKey()))
+            .collect(Collectors.toList());
+
+        // updateList를 제외한 나머지를 insertList로 저장
+        dtos.removeAll(updateList);
+
+        System.out.println("Update 대상: " + updateList.size());
+        System.out.println("Insert 대상: " + dtos.size()); // 원본 리스트에서 updateList 제외 후 insertList 역할
     }
 }
