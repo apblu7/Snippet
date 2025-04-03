@@ -1,1 +1,7 @@
-@JsonAlias("\2") // \1\nprivate String \4; //\3
+<insert id="insertExample" parameterType="list">
+    INSERT INTO example_table (id, name, value) 
+    VALUES 
+    <foreach item="item" index="index" collection="list" separator=",">
+        (#{item.id}, #{item.name}, #{item.value})
+    </foreach>
+</insert>
