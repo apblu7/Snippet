@@ -1,1 +1,49 @@
-SELECT TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS.MS');
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class JsonPagingExample {
+    public static void main(String[] args) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        int numOfRows = 0;   // 한 페이지당 가져올 데이터 개수
+        int totalCount = 0;  // 전체 데이터 개수
+        int pageNo = 0;      // 페이지 번호 (0부터 시작)
+
+        try {
+            do {
+                // API 응답 (실제 API 호출로 대체 가능)
+                String jsonResponse = getJsonResponse(pageNo);
+
+                // JSON 파싱
+                JsonNode rootNode = objectMapper.readTree(jsonResponse);
+                JsonNode bodyNode = rootNode.path("response").path("body");
+
+                // 필수값 pageNo 가져오기 (없으면 예외 발생)
+                if (!bodyNode.has("pageNo")) {
+                    throw new RuntimeException("Missing required field: pageNo");
+                }
+                pageNo = bodyNode.path("pageNo").asInt();
+
+                // 나머지 값 가져오기
+                numOfRows = bodyNode.path("numOfRows").asInt(0);
+                totalCount = bodyNode.path("totalCount").asInt(0);
+
+                // 데이터 처리 로직 (예: 리스트 저장, 출력)
+                System.out.println("Processing Page: " + pageNo);
+
+                // 다음 페이지 번호 증가
+                pageNo++;
+
+            } while (pageNo * numOfRows < totalCount); // 모든 데이터를 가져오면 종료
+        } catch (Exception e) {
+            System.err.println("Error occurred: " + e.getMessage());
+            // 롤백 로직 (필요하면 추가)
+        }
+    }
+
+    // 실제 API 요청을 대체하는 JSON 응답 예시
+    private static String getJsonResponse(int pageNo) {
+        return "{ \"response\": { \"body\": { "
+                + "\"numOfRows\": 10, \"pageNo\": " + pageNo + ", \"totalCount\": 35 } } }";
+    }
+}
