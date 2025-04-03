@@ -1,18 +1,1 @@
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-public class JacksonTest {
-    public static void main(String[] args) throws Exception {
-        String jsonString = "{ \"aaa\": \"John\", \"value\": \"A\", \"extraField\": \"ignored\" }";
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        
-        // JSON에 정의되지 않은 필드를 무시하도록 설정
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-        MyDto dto = objectMapper.readValue(jsonString, MyDto.class);
-
-        System.out.println("name: " + dto.getName());  // John
-        System.out.println("value: " + dto.getValue()); // A
-    }
-}
+SELECT TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS.MS');
