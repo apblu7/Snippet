@@ -1,4 +1,10 @@
+ClientHttpResponse clientResponse = restTemplate.getRequestFactory()
+    .createRequest(new URI(url), HttpMethod.GET)
+    .execute();
+
 HttpMessageConverterExtractor<Object> extractor =
     new HttpMessageConverterExtractor<>(Object.class, restTemplate.getMessageConverters());
 
-Object result = extractor.extractData(response);
+Object parsed = extractor.extractData(clientResponse);
+
+return ResponseEntity.ok(parsed);
