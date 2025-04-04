@@ -1,20 +1,2 @@
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-
-@Component
-public class MyScheduler {
-
-    // 매일 00:00 (한국 시간) 실행
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    public void runDailyJob() {
-        System.out.println("매일 자정 실행됨: " + LocalDateTime.now());
-    }
-
-    // 10분마다 (한국 시간 기준) 실행
-    @Scheduled(cron = "0 */10 * * * *", zone = "Asia/Seoul")
-    public void runEveryTenMinutesJob() {
-        System.out.println("10분마다 실행됨: " + LocalDateTime.now());
-    }
-}
+curl -X GET https://example.com/api \
+     -H "Content-Type: application/json"
