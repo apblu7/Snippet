@@ -1,2 +1,8 @@
-curl -X GET https://example.com/api \
-     -H "Accept: application/json"
+import org.springframework.core.io.Resource;
+
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+
+...
+
+String content = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
