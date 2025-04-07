@@ -1,27 +1,29 @@
-import org.springframework.core.io.Resource;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+ObjectMapper mapper = new ObjectMapper();
+List<JsonNode> mergedList = new ArrayList<>();
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
+// 1. 외부에서 여러 번 받은 JsonNode(List) 병합
+mergedList.addAll(externalList1);
+mergedList.addAll(externalList2);
+// ... 필요한 만큼 addAll
 
-...
+// 2. key1, key2 기준으로 그룹핑
+Map<String, List<JsonNode>> grouped = new HashMap<>();
 
-RestTemplate restTemplate = new RestTemplate();
+for (JsonNode node : mergedList) {
+    String key1 = node.has("key1") ? node.get("key1").asText() : "";
+    String key2 = node.has("key2") ? node.get("key2").asText() : "";
+    String groupKey = key1 + "_" + key2;
 
-ResponseEntity<Resource> response = restTemplate.exchange(
-    url,
-    HttpMethod.GET,
-    null,
-    Resource.class
-);
+    grouped.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(node);
+}
 
-Resource resource = response.getBody();
+// 3. 그룹별로 순회하며 JSON 문자열 생성 및 DB 업데이트
+for (List<JsonNode> group : grouped.values()) {
+    ArrayNode arrayNode = mapper.createArrayNode();
+    group.forEach(arrayNode::add);
 
-String content = new BufferedReader(
-    new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)
-).lines().collect(Collectors.joining("\n"));
+    String jsonString = mapper.writeValueAsString(arrayNode);
 
-System.out.println(content);
+    // 여기서 DB 업데이트 수행
+    updateJsonInDatabase(jsonString);
+}
