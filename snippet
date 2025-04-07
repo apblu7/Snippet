@@ -1,10 +1,27 @@
-ClientHttpResponse clientResponse = restTemplate.getRequestFactory()
-    .createRequest(new URI(url), HttpMethod.GET)
-    .execute();
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
-HttpMessageConverterExtractor<Object> extractor =
-    new HttpMessageConverterExtractor<>(Object.class, restTemplate.getMessageConverters());
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
-Object parsed = extractor.extractData(clientResponse);
+...
 
-return ResponseEntity.ok(parsed);
+RestTemplate restTemplate = new RestTemplate();
+
+ResponseEntity<Resource> response = restTemplate.exchange(
+    url,
+    HttpMethod.GET,
+    null,
+    Resource.class
+);
+
+Resource resource = response.getBody();
+
+String content = new BufferedReader(
+    new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)
+).lines().collect(Collectors.joining("\n"));
+
+System.out.println(content);
