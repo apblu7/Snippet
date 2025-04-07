@@ -1,18 +1,25 @@
-<configuration>
-    <!-- MyBatis 로그 설정 -->
-    <logger name="org.mybatis" level="DEBUG"/>
-    <logger name="org.apache.ibatis" level="DEBUG"/>
-    <logger name="org.apache.ibatis.session" level="DEBUG"/>
-    <logger name="org.apache.ibatis.executor.statement" level="DEBUG"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
 
-    <!-- 콘솔 출력용 Appender 예시 -->
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+    <Loggers>
+        <!-- MyBatis 내부 로거 조용히 만들기 -->
+        <Logger name="org.apache.ibatis" level="info" additivity="false"/>
+        <Logger name="org.apache.ibatis.executor" level="info" additivity="false"/>
+        <Logger name="org.apache.ibatis.session" level="info" additivity="false"/>
+        <Logger name="org.apache.ibatis.mapping" level="info" additivity="false"/>
+        <Logger name="org.apache.ibatis.logging" level="info" additivity="false"/>
 
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </root>
-</configuration>
+        <!-- Mapper ID가 로거 이름일 경우 끄기 (예: EtsMapperDAO) -->
+        <Logger name="EtsMapperDAO" level="off" additivity="false"/>
+
+        <!-- 전체 루트 로거는 DEBUG로 유지 -->
+        <Root level="debug">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
