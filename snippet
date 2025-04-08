@@ -1,1 +1,55 @@
-item
+@RestController
+@RequestMapping("/mock")
+public class MockController {
+
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    @GetMapping
+    public ResponseEntity<?> getMockedData(
+            @RequestParam Map<String, String> params
+    ) throws IOException {
+
+        int pageNo = Integer.parseInt(params.getOrDefault("pageNo", "1"));
+        int numOfRows = Integer.parseInt(params.getOrDefault("numOfRows", "10"));
+
+        // 1. 템플릿 로딩
+        JsonNode template = mapper.readTree(new ClassPathResource("mock/template.json").getFile());
+
+        // 2. 아이템 로딩
+        List<Map<String, Object>> items = mapper.readValue(
+                new ClassPathResource("mock/items.json").getInputStream(),
+                new TypeReference<>() {}
+        );
+
+        // 3. 필터링 (pageNo, numOfRows 제외한 나머지 param 사용)
+        List<Map<String, Object>> filtered = items.stream()
+                .filter(item -> {
+                    for (Map.Entry<String, String> entry : params.entrySet()) {
+                        String key = entry.getKey();
+                        String value = entry.getValue();
+                        if (key.equals("pageNo") || key.equals("numOfRows")) continue;
+
+                        Object field = item.get(key);
+                        if (field == null || !field.toString().toLowerCase().contains(value.toLowerCase())) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        // 4. 페이징
+        int totalCount = filtered.size();
+        int from = (pageNo - 1) * numOfRows;
+        int to = Math.min(from + numOfRows, totalCount);
+        List<Map<String, Object>> paged = (from < totalCount) ? filtered.subList(from, to) : Collections.emptyList();
+
+        // 5. 템플릿 값 세팅
+        ((ObjectNode) template.at("/response/body")).put("numOfRows", numOfRows);
+        ((ObjectNode) template.at("/response/body")).put("pageNo", pageNo);
+        ((ObjectNode) template.at("/response/body")).put("totalCount", totalCount);
+        ((ObjectNode) template.at("/response/body/items")).set("item", mapper.valueToTree(paged));
+
+        return ResponseEntity.ok(template);
+    }
+}
