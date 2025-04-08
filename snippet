@@ -1,3 +1,41 @@
-즉, 모든 row를 JSON 배열 요소로 포함하고 있으며, 전체가 하나의 JSON으로 출력됩니다.
-
-추가 포맷이나 파일 저장 등도 가능하니 필요하시면 알려주십시오.
+SELECT jsonb_pretty(
+  jsonb_agg(
+    jsonb_build_object(
+      'inst_id', inst_id,
+      'inst_nm', inst_nm,
+      'regDtime', reg_dtime,
+      'emrmrCnt', 99,
+      'surgrmCnt', 99,
+      'nervSpratmCnt', 99,
+      'emergSpratmCnt', 99,
+      'brstSpratmCnt', 99,
+      'comSpratmCnt', 99,
+      'hosprmCnt', 99,
+      'dutyManNm', duty_man_nm,
+      'ctUsefulYn', 'y',
+      'mriUsefulYn', 'y',
+      'angioUsefulYn', 'y',
+      'ventiAdultUsefulYn', 'y',
+      'ventiPreBabyAvlYn', 'y',
+      'incbtrUsefulYn', 'y',
+      'crtAvlYn', 'y',
+      'ecmoAvlYn', 'y',
+      'hoxyAvlYn', 'y',
+      'trypoAvlYn', 'y',
+      'amblcAvlYn', 'y',
+      'emrmDutyContact', emrm_dr_telno,
+      'mndcSpratmCnt', 99,
+      'surgSpratmCnt', 99,
+      'denergHosprmCnt', 99,
+      'nervSurgspratmCnt', 99,
+      'drfstSpratmCnt', 99,
+      'burnSpratmCnt', 99,
+      'traumaSpratmCnt', 99,
+      'ventiChildYn', 'y',
+      'incbtrYn', 'y',
+      'childDutyContact', child_ondr_dr_telno,
+      'emrmContact', emrm_telno
+    )
+  )
+) AS full_json
+FROM your_table_name;
