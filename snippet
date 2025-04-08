@@ -1,6 +1,4 @@
-ClassPathResource resource = new ClassPathResource("data/sample.json");
-try (InputStream inputStream = resource.getInputStream()) {
-    // 예: JSON 파싱에 사용
-    ObjectMapper mapper = new ObjectMapper();
-    MyData data = mapper.readValue(inputStream, MyData.class);
-}
+Locale locale = Optional.ofNullable(localeSupport)
+    .map(LocaleSupport::getLandCd)
+    .map(Locale::new)
+    .orElse(null);
