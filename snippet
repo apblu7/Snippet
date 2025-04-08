@@ -4,38 +4,41 @@ public class MockController {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    // 필터링에서 제외할 파라미터 키
+    private static final List<String> EXCLUDED_FILTER_KEYS = List.of("pageNo", "numOfRows");
+
     @GetMapping
     public ResponseEntity<?> getMockedData(@RequestParam Map<String, String> params) throws IOException {
-        // 페이징 값 추출
+        // 1. 페이징 정보
         int pageNo = Integer.parseInt(params.getOrDefault("pageNo", "1"));
         int numOfRows = Integer.parseInt(params.getOrDefault("numOfRows", "10"));
 
-        // 템플릿 로딩
+        // 2. 템플릿 로딩
         JsonNode template = mapper.readTree(new ClassPathResource("mock/template.json").getFile());
 
-        // 데이터 로딩
+        // 3. 데이터 로딩
         List<Map<String, Object>> items = mapper.readValue(
                 new ClassPathResource("mock/items.json").getInputStream(),
                 new TypeReference<>() {}
         );
 
-        // 필터링 파라미터 추출 (pageNo, numOfRows 제외)
-        Map<String, String> filterParams = new HashMap<>(params);
-        filterParams.remove("pageNo");
-        filterParams.remove("numOfRows");
+        // 4. 필터링 파라미터 추출
+        Map<String, String> filterParams = params.entrySet().stream()
+                .filter(entry -> !EXCLUDED_FILTER_KEYS.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        // 필터링 적용 (필터 파라미터 있을 때만)
+        // 5. 필터링 적용
         if (!filterParams.isEmpty()) {
             items = filterItems(items, filterParams);
         }
 
-        // 페이징
+        // 6. 페이징 처리
         int totalCount = items.size();
         int from = (pageNo - 1) * numOfRows;
         int to = Math.min(from + numOfRows, totalCount);
         List<Map<String, Object>> paged = (from < totalCount) ? items.subList(from, to) : Collections.emptyList();
 
-        // 템플릿 구성
+        // 7. 템플릿 조립
         ((ObjectNode) template.at("/response/body")).put("numOfRows", numOfRows);
         ((ObjectNode) template.at("/response/body")).put("pageNo", pageNo);
         ((ObjectNode) template.at("/response/body")).put("totalCount", totalCount);
@@ -44,7 +47,7 @@ public class MockController {
         return ResponseEntity.ok(template);
     }
 
-    // 필터링 로직 분리
+    // 공통 필터링 메소드
     private List<Map<String, Object>> filterItems(List<Map<String, Object>> list, Map<String, String> filters) {
         return list.stream()
                 .filter(item -> filters.entrySet().stream().allMatch(entry -> {
