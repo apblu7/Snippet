@@ -1,19 +1,30 @@
 @echo off
 setlocal
 
-set "SRC_PATH=C:\Projects\ets\target\ets.war"
-set "KEY_PATH=C:\Keys\server_key.pem"
-set "DEST_USER=ubuntu"
-set "DEST_HOST=10.110.30.50"
-set "DEST_PATH=/home/ubuntu/uploads"
+set PROJECT_NAME=ets_test
+set SERVER=10.110.30.50
+set USER=ubuntu
+set KEY_PATH=%~dp0\server_key.ppk
+set WAR_FILE=%PROJECT_NAME%.war
+set REMOTE_DIR=/home/ubuntu
 
-echo [INFO] Uploading %SRC_PATH% to %DEST_USER%@%DEST_HOST%:%DEST_PATH% ...
-scp -i "%KEY_PATH%" -P 22 "%SRC_PATH%" %DEST_USER%@%DEST_HOST%:%DEST_PATH%
+echo [INFO] Uploading "%~dp0\target\%WAR_FILE%" to sftp://%USER%@%SERVER%%REMOTE_DIR% ...
 
-if %errorlevel% neq 0 (
-    echo [ERROR] Upload failed.
-    exit /b 1
+"C:\Program Files (x86)\WinSCP\WinSCP.com" ^
+  /log="%~dp0\winscp_upload.log" ^
+  /ini=nul ^
+  /command ^
+    "open sftp://%USER%@%SERVER%/ -privatekey=""%KEY_PATH%""" ^
+    "put ""%~dp0\target\%WAR_FILE%"" ""%REMOTE_DIR%/""" ^
+    "exit"
+
+set ERRORLEVEL=%ERRORLEVEL%
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Upload failed with exit code %ERRORLEVEL%
+    pause
+    exit /b %ERRORLEVEL%
 )
 
-echo [INFO] Upload completed.
+echo [INFO] Upload succeeded.
+pause
 exit /b 0
