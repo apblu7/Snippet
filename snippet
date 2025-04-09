@@ -1,30 +1,41 @@
 @echo off
 setlocal
 
-rem === 변수 정의 (기존 설정 유지) ===
-set KEY_PATH=%~dp0\server_key.ppk
-set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
+rem local
 set PROJECT_NAME=ets_test
+set SERVER=ubuntu@10.110.30.50
+set KEY_PATH=%~dp0.\server_key.ppk
+set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
 set WAR_FILE=%PROJECT_NAME%.war
 set WAR_PATH=%~dp0..\target\
+
+rem remote
 set REMOTE_UPLOAD_DIR=/home/ubuntu
 set REMOTE_BACKUP_PATH=/home/ubuntu/deploy
 set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
 
-rem === WAR 파일 업로드 ===
-echo [INFO] Uploading %WAR_PATH%%WAR_FILE% to %REMOTE_UPLOAD_DIR%
-%WINSCP% /command ^
-    "open sftp://ubuntu@10.110.30.50/ -privatekey=""%KEY_PATH%"" -hostkey=* " ^
-    "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
-    "exit"
+rem log file (고정 파일명, 매번 초기화되며 삭제하지 않음)
+set LOG_FILE=%~dp0winscp_upload.log
 
-rem === 오류 확인 ===
+rem 로그 파일 초기화
+break > "%LOG_FILE%"
+
+echo [INFO] Uploading "%WAR_PATH%%WAR_FILE%" to "%SERVER%:%REMOTE_UPLOAD_DIR%"
+"%WINSCP%" /log="%LOG_FILE%" /command ^
+ "open sftp://%SERVER%/ -privatekey=""%KEY_PATH%"" -hostkey=* " ^
+ "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
+ "exit"
+
+echo [INFO] WinSCP returned errorlevel: %errorlevel%
+
 if %errorlevel% neq 0 (
-    echo [ERROR] Upload failed.
+    echo [ERROR] Upload failed. See log:
+    type "%LOG_FILE%"
     pause
     exit /b 1
 )
 
 echo [INFO] Upload completed.
+type "%LOG_FILE%"
 pause
 exit /b 0
