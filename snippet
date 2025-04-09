@@ -1,4 +1,19 @@
-Locale locale = Optional.ofNullable(localeSupport)
-    .map(LocaleSupport::getLandCd)
-    .map(Locale::new)
-    .orElse(null);
+@echo off
+setlocal
+
+set "SRC_PATH=C:\Projects\ets\target\ets.war"
+set "KEY_PATH=C:\Keys\server_key.pem"
+set "DEST_USER=ubuntu"
+set "DEST_HOST=10.110.30.50"
+set "DEST_PATH=/home/ubuntu/uploads"
+
+echo [INFO] Uploading %SRC_PATH% to %DEST_USER%@%DEST_HOST%:%DEST_PATH% ...
+scp -i "%KEY_PATH%" -P 22 "%SRC_PATH%" %DEST_USER%@%DEST_HOST%:%DEST_PATH%
+
+if %errorlevel% neq 0 (
+    echo [ERROR] Upload failed.
+    exit /b 1
+)
+
+echo [INFO] Upload completed.
+exit /b 0
