@@ -1,18 +1,30 @@
 @echo off
 setlocal
 
-rem ====== 설정 ======
+rem === 변수 정의 (기존 설정 유지) ===
+set KEY_PATH=%~dp0\server_key.ppk
 set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
-set SERVER=ubuntu@10.110.30.50
-set KEY_PATH=%~dp0server_key.ppk
-set WAR_FILE=ets_test.war
-set LOCAL_PATH=%~dp0target\%WAR_FILE%
-set REMOTE_PATH=/home/ubuntu/
+set PROJECT_NAME=ets_test
+set WAR_FILE=%PROJECT_NAME%.war
+set WAR_PATH=%~dp0..\target\
+set REMOTE_UPLOAD_DIR=/home/ubuntu
+set REMOTE_BACKUP_PATH=/home/ubuntu/deploy
+set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
 
-rem ====== 업로드 실행 ======
-%WINSCP% /console /command ^
-  "open sftp://%SERVER%/ -privatekey=""%KEY_PATH%""" ^
-  "put ""%LOCAL_PATH%"" ""%REMOTE_PATH%""" ^
-  "exit"
+rem === WAR 파일 업로드 ===
+echo [INFO] Uploading %WAR_PATH%%WAR_FILE% to %REMOTE_UPLOAD_DIR%
+%WINSCP% /command ^
+    "open sftp://ubuntu@10.110.30.50/ -privatekey=""%KEY_PATH%"" -hostkey=* " ^
+    "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
+    "exit"
 
+rem === 오류 확인 ===
+if %errorlevel% neq 0 (
+    echo [ERROR] Upload failed.
+    pause
+    exit /b 1
+)
+
+echo [INFO] Upload completed.
 pause
+exit /b 0
