@@ -1,27 +1,18 @@
 @echo off
 setlocal
 
-set PROJECT_NAME=ets_test
+rem ====== 설정 ======
+set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
 set SERVER=ubuntu@10.110.30.50
-set KEY_PATH=%~dp0\server_key.ppk
-set WAR_FILE=%PROJECT_NAME%.war
-set REMOTE_DIR=/home/ubuntu
+set KEY_PATH=%~dp0server_key.ppk
+set WAR_FILE=ets_test.war
+set LOCAL_PATH=%~dp0target\%WAR_FILE%
+set REMOTE_PATH=/home/ubuntu/
 
-echo [INFO] Uploading "%~dp0\target\%WAR_FILE%" to %SERVER%:%REMOTE_DIR% ...
-
-"C:\HUNESION\i-oneNGS\WinSCP.exe" /console ^
-  /command ^
+rem ====== 업로드 실행 ======
+%WINSCP% /console /command ^
   "open sftp://%SERVER%/ -privatekey=""%KEY_PATH%""" ^
-  "put ""%~dp0\target\%WAR_FILE%"" ""%REMOTE_DIR%/""" ^
+  "put ""%LOCAL_PATH%"" ""%REMOTE_PATH%""" ^
   "exit"
 
-set ERRORLEVEL=%ERRORLEVEL%
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Upload failed with exit code %ERRORLEVEL%
-    pause
-    exit /b %ERRORLEVEL%
-)
-
-echo [INFO] Upload succeeded.
 pause
-exit /b 0
