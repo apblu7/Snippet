@@ -14,13 +14,13 @@ set REMOTE_UPLOAD_DIR=/home/ubuntu
 set REMOTE_BACKUP_PATH=/home/ubuntu/deploy
 set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
 
-echo Step1. WAR 파일을 서버로 업로드합니다.
+echo Step1. Uploading WAR file to the server...
 %WINSCP% /console /command ^
     "open sftp://%SERVER%/ -privatekey=%KEY_PATH%" ^
     "put ""%WAR_PATH%%WAR_FILE%"" %REMOTE_UPLOAD_DIR%/" ^
     "exit"
 if %errorlevel% neq 0 (
-    echo [오류] 파일 업로드에 실패했습니다. errorlevel=%errorlevel%
+    echo [Error] File upload failed. errorlevel=%errorlevel%
     pause
     exit /b %errorlevel%
 )
