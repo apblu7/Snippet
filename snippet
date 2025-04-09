@@ -17,10 +17,20 @@ set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
 echo Step1. Uploading WAR file to the server...
 %WINSCP% /console /command ^
     "open sftp://%SERVER%/ -privatekey=%KEY_PATH%" ^
-    "put ""%WAR_PATH%%WAR_FILE%"" %REMOTE_UPLOAD_DIR%/" ^
+    "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
+    "put ""%~dp0deploy-ets"" ""%REMOTE_UPLOAD_DIR%/deploy/""" ^
     "exit"
 if %errorlevel% neq 0 (
     echo [Error] File upload failed. errorlevel=%errorlevel%
+    pause
+    exit /b %errorlevel%
+)
+pause
+
+echo Step2. Running remote deployment script...
+plink -i "%KEY_PATH%" %SERVER% "sh %REMOTE_UPLOAD_DIR%/deploy/deploy-ets"
+if %errorlevel% neq 0 (
+    echo [Error] Remote deployment failed. errorlevel=%errorlevel%
     pause
     exit /b %errorlevel%
 )
