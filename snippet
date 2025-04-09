@@ -4,7 +4,7 @@ setlocal
 rem local
 set PROJECT_NAME=ets_test
 set SERVER=ubuntu@10.110.30.50
-set KEY_PATH=%~dp0.\server_key.ppk
+set KEY_PATH=%~dp0.\server_key
 set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
 set WAR_FILE=%PROJECT_NAME%.war
 set WAR_PATH=%~dp0..\target\
@@ -14,24 +14,20 @@ set REMOTE_UPLOAD_DIR=/home/ubuntu
 set REMOTE_BACKUP_PATH=/home/ubuntu/deploy
 set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
 
-echo Step1. Uploading WAR file to the server...
+echo Step1. Uploading WAR and deploy script to the server...
 %WINSCP% /console /command ^
-    "open sftp://%SERVER%/ -privatekey=%KEY_PATH%" ^
+    "open sftp://%SERVER%/ -privatekey=%KEY_PATH%.ppk" ^
     "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
-    "put ""%~dp0deploy-ets"" ""%REMOTE_UPLOAD_DIR%/deploy/""" ^
+    "put ""%~dp0deploy-ets.sh"" ""%REMOTE_UPLOAD_DIR%/deploy/""" ^
     "exit"
 if %errorlevel% neq 0 (
-    echo [Error] File upload failed. errorlevel=%errorlevel%
-    pause
+    echo [Error] Upload failed. errorlevel=%errorlevel%
     exit /b %errorlevel%
 )
-pause
 
-echo Step2. Running remote deployment script...
-plink -i "%KEY_PATH%" %SERVER% "sh %REMOTE_UPLOAD_DIR%/deploy/deploy-ets"
+echo Step2. Running deploy-ets.sh on the server...
+plink -i "%KEY_PATH%" %SERVER% "sh %REMOTE_UPLOAD_DIR%/deploy/deploy-ets.sh"
 if %errorlevel% neq 0 (
     echo [Error] Remote deployment failed. errorlevel=%errorlevel%
-    pause
     exit /b %errorlevel%
 )
-pause
