@@ -1,20 +1,35 @@
-#!/bin/bash
+@echo off
+setlocal
 
-PROJECT_NAME=ets_test
-WAR_FILE_NAME="${PROJECT_NAME}.war"
-UPLOAD_DIR="/home/ubuntu"
-WAR_PATH="${UPLOAD_DIR}/${WAR_FILE_NAME}"
+rem local
+set PROJECT_NAME=ets_test
+set SERVER=ubuntu@10.110.30.50
+set KEY_PATH=%~dp0.\server_key
+set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
+set WAR_FILE=%PROJECT_NAME%.war
+set WAR_PATH=%~dp0..\target\
 
-echo "[STEP 3] Checking uploaded WAR file..."
+rem remote
+set REMOTE_UPLOAD_DIR=/home/ubuntu
+set REMOTE_BACKUP_PATH=/home/ubuntu/deploy
+set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
 
-if [ ! -f "$WAR_PATH" ]; then
-  echo "[ERROR] WAR file not found at: $WAR_PATH"
-  exit 1
-fi
+echo Step1. Uploading WAR and deploy script to the server...
+%WINSCP% /console /command ^
+    "open sftp://%SERVER%/ -privatekey=%KEY_PATH%.ppk" ^
+    "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
+    "put ""%~dp0deploy-ets.sh"" ""%REMOTE_UPLOAD_DIR%/deploy/""" ^
+    "exit"
+if %errorlevel% neq 0 (
+    echo [Error] Upload failed. errorlevel=%errorlevel%
+    exit /b %errorlevel%
+)
 
-if [ ! -s "$WAR_PATH" ]; then
-  echo "[ERROR] WAR file is empty: $WAR_PATH"
-  exit 1
-fi
+echo Step2. Running deploy-ets.sh on the server...
+plink -i "%KEY_PATH%" %SERVER% "sh %REMOTE_UPLOAD_DIR%/deploy/deploy-ets.sh"
+if %errorlevel% neq 0 (
+    echo [Error] Remote deployment failed. errorlevel=%errorlevel%
+    exit /b %errorlevel%
+)
 
-echo "[INFO] WAR file is present and non-empty: $WAR_PATH"
+pause
