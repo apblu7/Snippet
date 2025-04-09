@@ -22,6 +22,7 @@ echo Step1. Uploading WAR and deploy script to the server...
     "exit"
 if %errorlevel% neq 0 (
     echo [Error] Upload failed. errorlevel=%errorlevel%
+    pause
     exit /b %errorlevel%
 )
 
@@ -29,6 +30,7 @@ echo Step2. Running deploy-ets.sh on the server...
 plink -i "%KEY_PATH%" %SERVER% "sh %REMOTE_UPLOAD_DIR%/deploy/deploy-ets.sh"
 if %errorlevel% neq 0 (
     echo [Error] Remote deployment failed. errorlevel=%errorlevel%
+    pause
     exit /b %errorlevel%
 )
 
