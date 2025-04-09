@@ -2,21 +2,18 @@
 setlocal
 
 set PROJECT_NAME=ets_test
-set SERVER=10.110.30.50
-set USER=ubuntu
+set SERVER=ubuntu@10.110.30.50
 set KEY_PATH=%~dp0\server_key.ppk
 set WAR_FILE=%PROJECT_NAME%.war
 set REMOTE_DIR=/home/ubuntu
 
-echo [INFO] Uploading "%~dp0\target\%WAR_FILE%" to sftp://%USER%@%SERVER%%REMOTE_DIR% ...
+echo [INFO] Uploading "%~dp0\target\%WAR_FILE%" to %SERVER%:%REMOTE_DIR% ...
 
-"C:\Program Files (x86)\WinSCP\WinSCP.com" ^
-  /log="%~dp0\winscp_upload.log" ^
-  /ini=nul ^
+"C:\HUNESION\i-oneNGS\WinSCP.exe" /console ^
   /command ^
-    "open sftp://%USER%@%SERVER%/ -privatekey=""%KEY_PATH%""" ^
-    "put ""%~dp0\target\%WAR_FILE%"" ""%REMOTE_DIR%/""" ^
-    "exit"
+  "open sftp://%SERVER%/ -privatekey=""%KEY_PATH%""" ^
+  "put ""%~dp0\target\%WAR_FILE%"" ""%REMOTE_DIR%/""" ^
+  "exit"
 
 set ERRORLEVEL=%ERRORLEVEL%
 if %ERRORLEVEL% neq 0 (
