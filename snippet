@@ -1,5 +1,22 @@
-start "WinSCP Upload" cmd /k ^
-"%WINSCP%" /console /command ^
- "open sftp://%SERVER%/ -privatekey=""%KEY_PATH%"" -hostkey=*" ^
- "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
- "exit"
+@echo off
+setlocal
+
+rem local
+set PROJECT_NAME=ets_test
+set SERVER=ubuntu@10.110.30.50
+set KEY_PATH=%~dp0.\server_key.ppk
+set WINSCP="C:\HUNESION\i-oneNGS\WinSCP.exe"
+set WAR_FILE=%PROJECT_NAME%.war
+set WAR_PATH=%~dp0..\target\
+
+rem remote
+set REMOTE_UPLOAD_DIR=/home/ubuntu
+set REMOTE_BACKUP_PATH=/home/ubuntu/deploy
+set REMOTE_DEPLOY_PATH=/opt/apache-tomcat-9.0.89/webapps
+
+rem step1 - upload war file using WinSCP
+%WINSCP% /console /privatekey=%KEY_PATH% /hostkey=* ^
+  /command ^
+  "open sftp://%SERVER%/" ^
+  "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
+  "exit"
