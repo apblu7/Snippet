@@ -1,7 +1,24 @@
-%WINSCP% /console /command ^
-    "option batch abort" ^
-    "option confirm off" ^
-    "open sftp://%SERVER%/ -privatekey=%KEY_PATH%.ppk" ^
-    "put ""%WAR_PATH%%WAR_FILE%"" ""%REMOTE_UPLOAD_DIR%/""" ^
-    "put ""%~dp0deploy-ets.sh"" ""%REMOTE_UPLOAD_DIR%/deploy/""" ^
-    "exit"
+#!/bin/bash
+
+# Step 3. Check uploaded WAR file
+
+PROJECT_NAME=ets_test
+WAR_FILE_NAME="${PROJECT_NAME}.war"
+REMOTE_UPLOAD_DIR="/home/ubuntu"
+REMOTE_BACKUP_PATH="/home/ubuntu/deploy"
+REMOTE_DEPLOY_PATH="/opt/apache-tomcat-9.0.89/webapps"
+WAR_PATH="${REMOTE_UPLOAD_DIR}/${WAR_FILE_NAME}"
+
+echo "[STEP 3] Checking uploaded WAR file..."
+
+if [ ! -f "$WAR_PATH" ]; then
+  echo "[ERROR] WAR file not found at: $WAR_PATH"
+  exit 1
+fi
+
+if [ ! -s "$WAR_PATH" ]; then
+  echo "[ERROR] WAR file is empty: $WAR_PATH"
+  exit 1
+fi
+
+echo "[INFO] WAR file is present and non-empty: $WAR_PATH"
