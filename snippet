@@ -11,5 +11,22 @@ if exist "%LOG_FILE%" del "%LOG_FILE%"
 rem SnakeTail 실행
 start "SnakeTail" "%SNAKETAIL_EXE%" -f "%LOG_FILE%"
 
-rem deploy-ets.bat 실행 → 콘솔과 로그 동시 출력
-call "%TARGET_BAT%" | call "%~dp0tee.bat" "%LOG_FILE%"
+rem 배포 배치 실행 → 콘솔 + 로그 동시 출력
+call "%TARGET_BAT%" | call :tee "%LOG_FILE%"
+
+exit /b
+
+:: ===== tee 서브루틴 시작 =====
+:tee
+@echo off
+setlocal
+set LOG_FILE=%~1
+:tee_loop
+set "line="
+set /p line=
+if defined line (
+    echo %line%
+    echo %line% >> "%LOG_FILE%"
+    goto tee_loop
+)
+exit /b
