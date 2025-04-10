@@ -1,41 +1,55 @@
 package com.example.demo;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/json")
 public class JsonController {
 
-    private final String originalJson;
-    private String updatedJson = null;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final JsonNode originalJson;
+    private JsonNode updatedJson = null;
 
     public JsonController() throws IOException {
-        Resource resource = new ClassPathResource("data/sample.json");
-        this.originalJson = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        try (InputStream is = new ClassPathResource("data/sample.json").getInputStream()) {
+            this.originalJson = objectMapper.readTree(is); // JSON을 JsonNode로 파싱
+        }
     }
 
-    // 현재 JSON 반환
+    // JSON을 그대로 반환 (updatedJson이 있으면 그것을 반환, 없으면 원본을 반환)
     @GetMapping
-    public String getJson() {
+    public JsonNode getJson() {
         return updatedJson != null ? updatedJson : originalJson;
     }
 
-    // 새로운 JSON으로 업데이트
+    // JSON 업데이트 (POST로 받은 JSON을 updatedJson에 저장)
     @PostMapping
-    public String updateJson(@RequestBody String newJson) {
+    public String updateJson(@RequestBody JsonNode newJson) {
         this.updatedJson = newJson;
         return "updated";
     }
 
-    // 초기 상태로 되돌리기
+    // JSON 초기화 (reset은 updatedJson을 null로 설정)
     @PostMapping("/reset")
     public String resetJson() {
         this.updatedJson = null;
         return "reset";
+    }
+
+    // JSON을 List<Map<String, Object>>로 변환하여 반환
+    @GetMapping("/list")
+    public List<Map<String, Object>> getJsonAsList() {
+        JsonNode source = updatedJson != null ? updatedJson : originalJson;
+        return objectMapper.convertValue(source, new TypeReference<List<Map<String, Object>>>() {});
     }
 }
