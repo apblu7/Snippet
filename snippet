@@ -15,22 +15,14 @@ if exist "%LOG_FILE%" del "%LOG_FILE%"
 rem SnakeTail 실행
 start "SnakeTail" "%SNAKETAIL_EXE%" -f "%LOG_FILE%"
 
-rem VBS Base64 본문 저장
-> "%TEMP%\vbs.b64" (
-    echo U2V0IFdzaFNoZWxsID0gQ3JlYXRlT2JqZWN0KCJXU2NyaXB0LlNoZWxsIikNCldzaFNoZWxs
-    LlJ1biAiY21kIC9jIHN0YXJ0ICIlREVQTE9ZX1dJTkRPV19USVRMRSUiIGNtZCAvYyAiIiIlVEFS
-    R0VUX0JBVCIlIiAiICZndDsgIiIlTE9HX0ZJTEUlIiIgMiZndDsmMSIsIDAsIEZhbHNl
+rem VBS 직접 생성
+> "%VBS_TEMP_FILE%" (
+    echo Set WshShell = CreateObject("WScript.Shell")
+    echo WshShell.Run "cmd /c start ""%DEPLOY_WINDOW_TITLE%"" cmd /c """"%TARGET_BAT%"" ^>^> ""%LOG_FILE%"" 2^>^&1""", 0, False
 )
 
-rem Base64 → VBS 복호화
-certutil -f -decode "%TEMP%\vbs.b64" "%VBS_TEMP_FILE%" > nul 2>&1
-del "%TEMP%\vbs.b64" > nul 2>&1
-
-rem 변수를 VBS에 치환한 명령 실행
-setlocal enabledelayedexpansion
-set VBS_CALL=cmd /c start "%DEPLOY_WINDOW_TITLE%" cmd /c ""%TARGET_BAT%" >> "%LOG_FILE%" 2>>&1""
-cscript //nologo "%VBS_TEMP_FILE%" "%DEPLOY_WINDOW_TITLE%" "%TARGET_BAT%" "%LOG_FILE%"
-endlocal
+rem VBS 실행
+cscript //nologo "%VBS_TEMP_FILE%"
 
 rem deploy CMD PID 찾기
 set CMD_PID=
@@ -46,7 +38,7 @@ if %errorlevel% equ 0 (
     goto WAIT_SNAKETAIL
 )
 
-echo [INFO] SnakeTail 종료됨. 배포 CMD 종료 중...
+echo [INFO] SnakeTail 종료 감지됨. 배포 CMD 종료 중...
 if defined CMD_PID (
     taskkill /pid %CMD_PID% /f > nul 2>&1
 )
