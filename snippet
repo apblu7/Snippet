@@ -1,1 +1,1 @@
-readlink -f /proc/$(pgrep -f tomcat | head -1)/cwd
+ls -al /proc/$(pgrep -f tomcat | head -1)/cwd
