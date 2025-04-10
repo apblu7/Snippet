@@ -5,19 +5,23 @@ setlocal
 set TARGET_BAT=C:\HUNESION\i-oneNGS\deploy-ets.bat
 set LOG_FILE=C:\HUNESION\i-oneNGS\deploy-ets.log
 set SNAKETAIL_EXE=C:\Tools\SnakeTail\SnakeTail.exe
+set DEPLOY_WINDOW_TITLE=deploy-ets-hidden
 
 if exist "%LOG_FILE%" del "%LOG_FILE%"
 
 rem 1. SnakeTail 실행
 start "SnakeTail" "%SNAKETAIL_EXE%" -f "%LOG_FILE%"
 
-rem 2. deploy-ets.bat을 별도 CMD 창에서 백그라운드 실행
-start "deploy-ets" cmd /c ""%TARGET_BAT%" >> "%LOG_FILE%" 2>&1"
+rem 2. deploy-ets.bat을 최소화된 창으로 실행 (사용자 입장에서 사실상 안보임)
+start /min "%DEPLOY_WINDOW_TITLE%" cmd /c ""%TARGET_BAT%" >> "%LOG_FILE%" 2>&1"
 
-rem 3. deploy-ets.bat의 CMD 프로세스를 추적 (실행 직후 가장 최근 cmd.exe)
-for /f "tokens=2" %%P in ('tasklist /fi "imagename eq cmd.exe" /fo list ^| findstr /i "PID"') do set CMD_PID=%%P
+rem 3. deploy CMD의 PID 추적
+set CMD_PID=
+for /f "tokens=2 delims=," %%A in ('tasklist /v /fo csv ^| findstr /i "%DEPLOY_WINDOW_TITLE%"') do (
+    set CMD_PID=%%~A
+)
 
-rem 4. SnakeTail 감시
+rem 4. SnakeTail 감시 루프
 :WAIT_SNAKETAIL
 tasklist /fi "imagename eq SnakeTail.exe" | find /i "SnakeTail.exe" > nul
 if %errorlevel% equ 0 (
@@ -25,9 +29,10 @@ if %errorlevel% equ 0 (
     goto WAIT_SNAKETAIL
 )
 
-echo [INFO] SnakeTail 종료 감지됨. 배포 배치도 종료합니다.
+echo [INFO] SnakeTail 종료됨. 배포 CMD 종료 중...
 
-rem 5. deploy-ets.bat을 실행한 CMD 강제 종료
-taskkill /pid %CMD_PID% /f > nul 2>&1
+if defined CMD_PID (
+    taskkill /pid %CMD_PID% /f > nul 2>&1
+)
 
 exit
