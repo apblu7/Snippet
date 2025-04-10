@@ -1,12 +1,41 @@
-$batPath = "C:\HUNESION\i-oneNGS\deploy-ets.bat"
-$logPath = "C:\HUNESION\i-oneNGS\deploy-ets.log"
-$tailExe = "C:\Tools\SnakeTail\SnakeTail.exe"
+package com.example.demo;
 
-# 기존 로그 삭제
-if (Test-Path $logPath) { Remove-Item $logPath }
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.web.bind.annotation.*;
 
-# 배치파일 실행 (출력 로그로 저장)
-Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c `"$batPath >> $logPath 2>>&1`""
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-# SnakeTail 로그 모니터링 시작
-Start-Process $tailExe -ArgumentList "-f", "$logPath"
+@RestController
+@RequestMapping("/json")
+public class JsonController {
+
+    private final String originalJson;
+    private String updatedJson = null;
+
+    public JsonController() throws IOException {
+        Resource resource = new ClassPathResource("data/sample.json");
+        this.originalJson = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    // 현재 JSON 반환
+    @GetMapping
+    public String getJson() {
+        return updatedJson != null ? updatedJson : originalJson;
+    }
+
+    // 새로운 JSON으로 업데이트
+    @PostMapping
+    public String updateJson(@RequestBody String newJson) {
+        this.updatedJson = newJson;
+        return "updated";
+    }
+
+    // 초기 상태로 되돌리기
+    @PostMapping("/reset")
+    public String resetJson() {
+        this.updatedJson = null;
+        return "reset";
+    }
+}
