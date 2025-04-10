@@ -11,5 +11,5 @@ if exist "%LOG_FILE%" del "%LOG_FILE%"
 rem SnakeTail 실행
 start "SnakeTail" "%SNAKETAIL_EXE%" -f "%LOG_FILE%"
 
-rem 배포 배치 실행 → PowerShell로 stdout + stderr → tee
-powershell -Command "& { cmd /c `"%TARGET_BAT%`" 2>&1 | Tee-Object -FilePath `"%LOG_FILE%`" }"
+rem deploy-ets.bat 실행 → 콘솔과 로그 동시 출력
+call "%TARGET_BAT%" | call "%~dp0tee.bat" "%LOG_FILE%"
