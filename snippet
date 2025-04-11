@@ -1,35 +1,4 @@
-<mapper namespace="com.example.mapper.UserMapper">
-
-  <!-- 1. DROP + CREATE (기존 users 테이블 스키마 복사) -->
-  <update id="recreateTempTable">
-    DROP TABLE IF EXISTS tmp_users;
-    CREATE TEMP TABLE tmp_users AS TABLE users WITH NO DATA;
-  </update>
-
-  <!-- 2. 임시 테이블에 데이터 삽입 -->
-  <insert id="insertTempUsers">
-    INSERT INTO tmp_users (email, name)
-    VALUES
-    <foreach collection="list" item="user" separator=",">
-      (#{user.email}, #{user.name})
-    </foreach>
-  </insert>
-
-  <!-- 3. 기존 users 테이블 업데이트 -->
-  <update id="updateUsersFromTemp">
-    UPDATE users u
-    SET name = tmp.name
-    FROM tmp_users tmp
-    WHERE u.email = tmp.email;
-  </update>
-
-  <!-- 4. 기존에 없는 users 레코드 삽입 -->
-  <insert id="insertUsersFromTemp">
-    INSERT INTO users (email, name)
-    SELECT tmp.email, tmp.name
-    FROM tmp_users tmp
-    LEFT JOIN users u ON u.email = tmp.email
-    WHERE u.email IS NULL;
-  </insert>
-
-</mapper>
+CREATE TEMP TABLE tmp_users (
+  email TEXT,
+  name TEXT
+);
