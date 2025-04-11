@@ -1,4 +1,12 @@
-<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-    <property name="basePackage" value="com.example.mapper" />
-    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
-</bean>
+@Autowired
+private ApplicationContext applicationContext;
+
+@PostConstruct
+public void checkMapperBean() {
+    String[] beans = applicationContext.getBeanDefinitionNames();
+    for (String beanName : beans) {
+        if (beanName.toLowerCase().contains("userMapper".toLowerCase())) {
+            System.out.println(">> Found Bean: " + beanName);
+        }
+    }
+}
