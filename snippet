@@ -1,4 +1,64 @@
-CREATE TEMP TABLE tmp_users (
-  email TEXT,
-  name TEXT
-);
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class MyBatisStatementGenerator {
+
+    public static String generateInsert(Class<?> clazz, String tableName) {
+        List<String> fields = getFieldNames(clazz);
+
+        String columns = String.join(", ", fields);
+        String values = fields.stream()
+                .map(f -> "#{" + f + "}")
+                .collect(Collectors.joining(", "));
+
+        return String.format("""
+            INSERT INTO %s (%s)
+            VALUES (%s)
+            """, tableName, columns, values).strip();
+    }
+
+    public static String generateBatchInsert(Class<?> clazz, String tableName) {
+        List<String> fields = getFieldNames(clazz);
+
+        String columns = String.join(", ", fields);
+        String values = fields.stream()
+                .map(f -> "#{" + "item." + f + "}")
+                .collect(Collectors.joining(", "));
+
+        return String.format("""
+            INSERT INTO %s (%s)
+            VALUES
+            <foreach collection="list" item="item" separator=",">
+              (%s)
+            </foreach>
+            """, tableName, columns, values).strip();
+    }
+
+    public static String generateUpdate(Class<?> clazz, String tableName, List<String> whereKeys) {
+        List<String> fields = getFieldNames(clazz);
+
+        List<String> setFields = fields.stream()
+                .filter(f -> !whereKeys.contains(f))
+                .map(f -> f + " = #{" + f + "}")
+                .collect(Collectors.toList());
+
+        String setPart = String.join(", ", setFields);
+        String wherePart = whereKeys.stream()
+                .map(k -> k + " = #{" + k + "}")
+                .collect(Collectors.joining(" AND "));
+
+        return String.format("""
+            UPDATE %s
+            SET %s
+            WHERE %s
+            """, tableName, setPart, wherePart).strip();
+    }
+
+    private static List<String> getFieldNames(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredFields())
+                .map(Field::getName)
+                .collect(Collectors.toList());
+    }
+}
