@@ -1,64 +1,71 @@
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MyBatisStatementGenerator {
 
     public static String generateInsert(Class<?> clazz, String tableName) {
         List<String> fields = getFieldNames(clazz);
 
-        String columns = String.join(", ", fields);
-        String values = fields.stream()
-                .map(f -> "#{" + f + "}")
-                .collect(Collectors.joining(", "));
-
-        return String.format("""
-            INSERT INTO %s (%s)
-            VALUES (%s)
-            """, tableName, columns, values).strip();
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO ").append(tableName).append(" (");
+        sb.append(join(fields, ", "));
+        sb.append(")\nVALUES (");
+        sb.append(join(fields, ", ", "#{", "}"));
+        sb.append(")");
+        return sb.toString();
     }
 
     public static String generateBatchInsert(Class<?> clazz, String tableName) {
         List<String> fields = getFieldNames(clazz);
 
-        String columns = String.join(", ", fields);
-        String values = fields.stream()
-                .map(f -> "#{" + "item." + f + "}")
-                .collect(Collectors.joining(", "));
-
-        return String.format("""
-            INSERT INTO %s (%s)
-            VALUES
-            <foreach collection="list" item="item" separator=",">
-              (%s)
-            </foreach>
-            """, tableName, columns, values).strip();
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO ").append(tableName).append(" (");
+        sb.append(join(fields, ", "));
+        sb.append(")\nVALUES\n<foreach collection=\"list\" item=\"item\" separator=\",\">\n  (");
+        sb.append(join(fields, ", ", "#{item.", "}"));
+        sb.append(")\n</foreach>");
+        return sb.toString();
     }
 
     public static String generateUpdate(Class<?> clazz, String tableName, List<String> whereKeys) {
         List<String> fields = getFieldNames(clazz);
 
-        List<String> setFields = fields.stream()
-                .filter(f -> !whereKeys.contains(f))
-                .map(f -> f + " = #{" + f + "}")
-                .collect(Collectors.toList());
+        StringBuilder setPart = new StringBuilder();
+        StringBuilder wherePart = new StringBuilder();
 
-        String setPart = String.join(", ", setFields);
-        String wherePart = whereKeys.stream()
-                .map(k -> k + " = #{" + k + "}")
-                .collect(Collectors.joining(" AND "));
+        for (String field : fields) {
+            if (whereKeys.contains(field)) {
+                if (wherePart.length() > 0) wherePart.append(" AND ");
+                wherePart.append(field).append(" = #{").append(field).append("}");
+            } else {
+                if (setPart.length() > 0) setPart.append(", ");
+                setPart.append(field).append(" = #{").append(field).append("}");
+            }
+        }
 
-        return String.format("""
-            UPDATE %s
-            SET %s
-            WHERE %s
-            """, tableName, setPart, wherePart).strip();
+        return "UPDATE " + tableName + "\nSET " + setPart.toString() + "\nWHERE " + wherePart.toString();
     }
 
     private static List<String> getFieldNames(Class<?> clazz) {
-        return Arrays.stream(clazz.getDeclaredFields())
-                .map(Field::getName)
-                .collect(Collectors.toList());
+        List<String> fieldNames = new ArrayList<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            fieldNames.add(field.getName());
+        }
+        return fieldNames;
+    }
+
+    private static String join(List<String> list, String separator) {
+        return join(list, separator, "", "");
+    }
+
+    private static String join(List<String> list, String separator, String prefix, String suffix) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0) sb.append(separator);
+            sb.append(prefix).append(list.get(i)).append(suffix);
+        }
+        return sb.toString();
     }
 }
