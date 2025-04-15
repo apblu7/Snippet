@@ -1,23 +1,12 @@
-@Aspect
-@Component
-public class ServiceLogAspect {
+MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+Method method = signature.getMethod();
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceLogAspect.class);
+// 실제 클래스가 아닌 인터페이스 메소드에서 애노테이션 확인
+Method interfaceMethod = joinPoint.getTarget()
+        .getClass()
+        .getInterfaces()[0]  // 주의: 인터페이스가 여러 개일 경우 주의 필요
+        .getMethod(method.getName(), method.getParameterTypes());
 
-    @Pointcut("execution(* com.example.service..*(..))")
-    public void serviceMethods() {}
-
-    @Around("serviceMethods()")
-    public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
-        String methodName = joinPoint.getSignature().toShortString();
-        log.info("START: {}", methodName);
-        try {
-            Object result = joinPoint.proceed();
-            log.info("END: {}", methodName);
-            return result;
-        } catch (Throwable t) {
-            log.error("ERROR in {}: {}", methodName, t.getMessage());
-            throw t;
-        }
-    }
+if (interfaceMethod.isAnnotationPresent(NoLogging.class)) {
+    return joinPoint.proceed();
 }
