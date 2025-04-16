@@ -1,5 +1,7 @@
+@Autowired
+private ApplicationContext context;
+
 @PostConstruct
 public void init() {
-    System.out.println("[DEBUG] " + this.getClass().getSimpleName() + " @ " +
-        ApplicationContextProvider.getApplicationContext().getId() + " 초기화됨");
+    System.out.println("[DEBUG] " + this + " @ " + context.getId());
 }
