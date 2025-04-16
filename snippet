@@ -1,1 +1,5 @@
-System.out.println("[DEBUG] Created: " + this + " @ " + ApplicationContextProvider.getApplicationContext().getId());
+@PostConstruct
+public void init() {
+    System.out.println("[DEBUG] " + this.getClass().getSimpleName() + " @ " +
+        ApplicationContextProvider.getApplicationContext().getId() + " 초기화됨");
+}
