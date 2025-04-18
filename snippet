@@ -1,1 +1,5 @@
-System.out.println("[SchedulerLogAspect] AOP is enabled: server.type=dev (Logging scheduler is active)");
+SELECT
+  TO_CHAR(timestamp2 - timestamp1, 'HH24:MI:SS') ||
+  '.' ||
+  LPAD(ROUND(EXTRACT(MILLISECOND FROM timestamp2 - timestamp1) / 10)::text, 2, '0') AS formatted_diff
+FROM your_table;
