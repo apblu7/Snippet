@@ -1,12 +1,8 @@
 @Override
 public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-    Object[] args = (Object[]) context.getAttribute("args");
-    Object target = context.getAttribute("target");
-    String label = context.getLabel(); // 또는 context.getAttribute("label")
+    String contextName = (String) context.getAttribute("context.name");
+    int attempt = context.getRetryCount();
 
-    log.warn("Retry failed. label={}, target={}, args={}, error={}",
-        label,
-        (target != null ? target.getClass().getSimpleName() : "unknown"),
-        Arrays.toString(args),
-        throwable.toString());
+    Logger log = LoggerFactory.getLogger("RetryLogger");
+    log.warn("Retry #{} failed - method={}, error={}", attempt, contextName, throwable.toString());
 }
