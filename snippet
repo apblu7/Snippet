@@ -1,37 +1,12 @@
-@Configuration
-@EnableRetry
-public class RetryConfig {
+@Override
+public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
+    Object[] args = (Object[]) context.getAttribute("args");
+    Object target = context.getAttribute("target");
+    String label = context.getLabel(); // 또는 context.getAttribute("label")
 
-    @Bean
-    public RetryListener retryLogger() {
-        return new RetryListener() {
-
-            @Override
-            public <T, E extends Throwable> boolean open(RetryContext context, RetryCallback<T, E> callback) {
-                return true; // 항상 열기
-            }
-
-            @Override
-            public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-                // 종료 시점 로깅 필요 시 구현
-            }
-
-            @Override
-            public <T, E extends Throwable> void onError(
-                    RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-
-                Method method = (Method) context.getAttribute("method");
-                Object[] args = (Object[]) context.getAttribute("args");
-
-                String methodName = (method != null) ? method.getName() : "unknown";
-                String argStr = (args != null) ? Arrays.toString(args) : "[]";
-                int attempt = context.getRetryCount();
-
-                Logger log = LoggerFactory.getLogger("RetryLogger");
-
-                log.warn("Retry #{} failed - method={}, args={}, error={}",
-                         attempt, methodName, argStr, throwable.toString());
-            }
-        };
-    }
+    log.warn("Retry failed. label={}, target={}, args={}, error={}",
+        label,
+        (target != null ? target.getClass().getSimpleName() : "unknown"),
+        Arrays.toString(args),
+        throwable.toString());
 }
