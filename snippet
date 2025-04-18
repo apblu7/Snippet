@@ -1,5 +1,5 @@
-SELECT
-  TO_CHAR(timestamp2 - timestamp1, 'HH24:MI:SS') ||
-  '.' ||
-  LPAD(ROUND(EXTRACT(MILLISECOND FROM timestamp2 - timestamp1) / 10)::text, 2, '0') AS formatted_diff
-FROM your_table;
+@Recover
+public void recover(HttpServerErrorException e, String input) {
+    log.error("Recover triggered after retries failed. input={}, status={}, body={}",
+              input, e.getStatusCode(), e.getResponseBodyAsString());
+}
