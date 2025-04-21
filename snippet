@@ -1,5 +1,35 @@
-SELECT *
-FROM your_table
-ORDER BY some_column
-LIMIT #{numOfRow}
-OFFSET #{(pageNo - 1) * numOfRow}
+public class JsonNodeTypeHandler extends BaseTypeHandler<JsonNode> {
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    @Override
+    public void setNonNullParameter(PreparedStatement ps, int i, JsonNode parameter, JdbcType jdbcType)
+            throws SQLException {
+        ps.setString(i, parameter.toString());
+    }
+
+    @Override
+    public JsonNode getNullableResult(ResultSet rs, String columnName) throws SQLException {
+        String json = rs.getString(columnName);
+        return parseJson(json);
+    }
+
+    @Override
+    public JsonNode getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+        String json = rs.getString(columnIndex);
+        return parseJson(json);
+    }
+
+    @Override
+    public JsonNode getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+        String json = cs.getString(columnIndex);
+        return parseJson(json);
+    }
+
+    private JsonNode parseJson(String json) throws SQLException {
+        try {
+            return (json == null || json.isEmpty()) ? null : mapper.readTree(json);
+        } catch (IOException e) {
+            throw new SQLException("Failed to parse JSON string", e);
+        }
+    }
+}
