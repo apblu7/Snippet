@@ -1,8 +1,5 @@
-@Override
-public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-    String contextName = (String) context.getAttribute("context.name");
-    int attempt = context.getRetryCount();
-
-    Logger log = LoggerFactory.getLogger("RetryLogger");
-    log.warn("Retry #{} failed - method={}, error={}", attempt, contextName, throwable.toString());
-}
+SELECT *
+FROM your_table
+ORDER BY some_column
+LIMIT #{numOfRow}
+OFFSET #{(pageNo - 1) * numOfRow}
