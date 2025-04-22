@@ -1,14 +1,9 @@
-@Component
-public class ResponseCodeUtil {
+수작업 팁 (노트패드++ 기준)
+	1.	Ctrl + H (바꾸기)
+	2.	찾을 내용: ^([^\t]+)\t(.+)$
+바꿀 내용: \1("\2"),
+	3.	정규식 사용 체크
 
-    private static Properties props;
+위 작업 후 마지막 ,를 ;로 바꾸고, 생성자 및 getter는 직접 붙이시면 됩니다.
 
-    @Autowired
-    public ResponseCodeUtil(@Qualifier("responseCodeProperties") Properties injectedProps) {
-        ResponseCodeUtil.props = injectedProps;
-    }
-
-    public static String get(String key) {
-        return props.getProperty(key, key); // 기본값은 키 자체 반환
-    }
-}
+필요하시면 전체 자동 변환 스크립트나 더 많은 예시도 드릴 수 있습니다.
