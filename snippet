@@ -1,35 +1,14 @@
-public class JsonNodeTypeHandler extends BaseTypeHandler<JsonNode> {
-    private static final ObjectMapper mapper = new ObjectMapper();
+@Component
+public class ResponseCodeUtil {
 
-    @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, JsonNode parameter, JdbcType jdbcType)
-            throws SQLException {
-        ps.setString(i, parameter.toString());
+    private static Properties props;
+
+    @Autowired
+    public ResponseCodeUtil(@Qualifier("responseCodeProperties") Properties injectedProps) {
+        ResponseCodeUtil.props = injectedProps;
     }
 
-    @Override
-    public JsonNode getNullableResult(ResultSet rs, String columnName) throws SQLException {
-        String json = rs.getString(columnName);
-        return parseJson(json);
-    }
-
-    @Override
-    public JsonNode getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-        String json = rs.getString(columnIndex);
-        return parseJson(json);
-    }
-
-    @Override
-    public JsonNode getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-        String json = cs.getString(columnIndex);
-        return parseJson(json);
-    }
-
-    private JsonNode parseJson(String json) throws SQLException {
-        try {
-            return (json == null || json.isEmpty()) ? null : mapper.readTree(json);
-        } catch (IOException e) {
-            throw new SQLException("Failed to parse JSON string", e);
-        }
+    public static String get(String key) {
+        return props.getProperty(key, key); // 기본값은 키 자체 반환
     }
 }
