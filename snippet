@@ -1,9 +1,17 @@
-수작업 팁 (노트패드++ 기준)
-	1.	Ctrl + H (바꾸기)
-	2.	찾을 내용: ^([^\t]+)\t(.+)$
-바꿀 내용: \1("\2"),
-	3.	정규식 사용 체크
-
-위 작업 후 마지막 ,를 ;로 바꾸고, 생성자 및 getter는 직접 붙이시면 됩니다.
-
-필요하시면 전체 자동 변환 스크립트나 더 많은 예시도 드릴 수 있습니다.
+api.result.msg.normal=API call processed successfully.
+api.result.msg.application=An error occurred while processing the application.
+api.result.msg.db=An error occurred during database processing.
+api.result.msg.nodata=No data available to respond to the request.
+api.result.msg.http=HTTP request error occurred.
+api.result.msg.servicetime=Failed due to service response timeout.
+api.result.msg.invalid_request_parameter=The request parameters were invalid in value or format.
+api.result.msg.no_mandatory_request_parameters=Missing mandatory request parameters in the API call.
+api.result.msg.no_openapi_service=The requested service is unavailable or has been deprecated.
+api.result.msg.service_access_denied=Service access was denied due to permission issues.
+api.result.msg.temporarily_disable_the_servicekey=The service key is temporarily disabled.
+api.result.msg.limited_number_of_service_requests_exceeded=API request rate limit exceeded.
+api.result.msg.service_key_is_not_registered=The service key is not registered.
+api.result.msg.deadline_has_expired=The usage period of the service has expired.
+api.result.msg.unregistered_ip=The API was called from an unregistered IP address.
+api.result.msg.signature_verification=Signature verification failed for the API call.
+api.result.msg.unknown=An unknown error occurred.
