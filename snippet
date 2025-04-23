@@ -1,1 +1,104 @@
-col
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+public class SbomToExcelNIS {
+    public static void main(String[] args) {
+        String inputJsonPath = "C:\\\\path\\\\to\\\\bom.json";  // 수정하세요
+        String outputExcelPath = "C:\\\\path\\\\to\\\\bom.xlsx"; // 수정하세요
+
+        List<String> headers = Arrays.asList(
+                "SBOM Standard", "SBOM Type", "CycloneDX No.", "SPDX Doc. ID", "SBOM ID",
+                "Product Name", "Product Version", "Component Name", "Component Alias", "Component Version",
+                "Component Supplier Name", "Component Hash", "Component Path", "Unique Identifier", "Dependency Relationship",
+                "Timestamp", "License Name·Version", "Vul. DB", "Vul. Info", "SBOM 생성일시"
+        );
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(new File(inputJsonPath));
+            JsonNode components = root.path("components");
+
+            String serialNumber = root.path("serialNumber").asText("");
+            String timestamp = root.path("metadata").path("timestamp").asText("");
+            String specVersion = root.path("specVersion").asText("");
+            String format = root.path("bomFormat").asText("");
+
+            String sbomId = "NIS-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-" + UUID.randomUUID().toString().substring(0, 6);
+            String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("NIS-SBOM");
+
+            // 헤더
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.size(); i++) {
+                headerRow.createCell(i).setCellValue(headers.get(i));
+            }
+
+            // 데이터 행
+            int rowIdx = 1;
+            for (JsonNode component : components) {
+                Row row = sheet.createRow(rowIdx++);
+                int col = 0;
+
+                String name = component.path("name").asText();
+                String version = component.path("version").asText();
+                String alias = name; // 동일 처리
+                String supplier = component.path("supplier").asText("");
+                String group = component.path("group").asText(""); // Unique ID용
+                String purl = component.path("purl").asText("");
+                String license = component.path("licenses").path(0).path("license").path("id").asText("");
+                String hashSha256 = "";
+
+                JsonNode hashes = component.path("hashes");
+                if (hashes.isArray()) {
+                    for (JsonNode h : hashes) {
+                        if ("SHA-256".equalsIgnoreCase(h.path("alg").asText(""))) {
+                            hashSha256 = h.path("content").asText("");
+                            break;
+                        }
+                    }
+                }
+
+                String warPath = "WEB-INF/lib/" + name + "-" + version + ".jar";
+
+                row.createCell(col++).setCellValue("NIS 1.0");                 // 1. 표준
+                row.createCell(col++).setCellValue("Deployed");               // 2. 타입
+                row.createCell(col++).setCellValue(serialNumber);             // 3. CycloneDX No
+                row.createCell(col++).setCellValue("");                       // 4. SPDX Doc ID (공란)
+                row.createCell(col++).setCellValue(sbomId);                   // 5. SBOM ID
+                row.createCell(col++).setCellValue("MyProduct");              // 6. 제품명
+                row.createCell(col++).setCellValue("1.0");                    // 7. 제품버전
+                row.createCell(col++).setCellValue(name);                     // 8. 컴포넌트 이름
+                row.createCell(col++).setCellValue(alias);                    // 9. 컴포넌트 별칭
+                row.createCell(col++).setCellValue(version);                  // 10. 컴포넌트 버전
+                row.createCell(col++).setCellValue(supplier);                // 11. 공급자
+                row.createCell(col++).setCellValue(hashSha256);              // 12. 해시 (SHA-256)
+                row.createCell(col++).setCellValue(warPath);                 // 13. 컴포넌트 경로
+                row.createCell(col++).setCellValue(group);                   // 14. Unique ID
+                row.createCell(col++).setCellValue(group);                   // 15. Dependency 관계
+                row.createCell(col++).setCellValue(timestamp);               // 16. 타임스탬프
+                row.createCell(col++).setCellValue(license);                 // 17. 라이선스
+                row.createCell(col++).setCellValue("NVD");                   // 18. 보안 DB
+                row.createCell(col++).setCellValue("");                      // 19. 취약점 정보
+                row.createCell(col++).setCellValue(now);                     // 20. 생성일시
+            }
+
+            try (FileOutputStream out = new FileOutputStream(outputExcelPath)) {
+                workbook.write(out);
+                System.out.println("NIS-SBOM Excel 파일 생성 완료: " + outputExcelPath);
+            }
+            workbook.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
