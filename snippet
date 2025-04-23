@@ -10,14 +10,15 @@ import java.util.*;
 
 public class SbomToNisExcelFinal {
     public static void main(String[] args) {
-        String inputJsonPath = "C:\\path\\to\\bom.json";     // 입력 bom.json 경로
-        String outputExcelPath = "C:\\path\\to\\bom.xlsx";   // 출력 엑셀 경로
+        String inputJsonPath = "C:\\path\\to\\bom.json";
+        String outputExcelPath = "C:\\path\\to\\bom.xlsx";
 
         List<String> headers = Arrays.asList(
                 "01. SBOM Standard", "02. SBOM Type", "03. CycloneDX No.", "04. SPDX Doc. ID", "05. SBOM ID",
                 "06. Product Name", "07. Product Version", "08. Component Name", "09. Component Alias", "10. Component Version",
-                "11. Component Supplier Name", "12. Component Hash", "13. Component Path", "14. Unique Identifier", "15. Dependency Relationship",
-                "16. Timestamp", "17. License Name·Version", "18. Vul. DB", "19. Vul. Info", "20. SBOM 생성일시"
+                "11. Component Supplier Name", "12. Component Hash", "13. Component Path", "14. SBOM 작성자 정보", "15. Unique Identifier",
+                "16. Dependency Relationship", "17. Timestamp", "18. License Name·Version", "19. Vul. DB", "20. Vul. Info",
+                "21. SBOM 생성일시"
         );
 
         try {
@@ -32,7 +33,7 @@ public class SbomToNisExcelFinal {
             String sbomId = "WINITECH-" + today + "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
             String generatedAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
 
-            // purl 기준 의존성 관계 정리
+            // 종속성 정리
             Map<String, List<String>> dependencyMap = new HashMap<>();
             for (JsonNode dep : dependencies) {
                 String ref = dep.path("ref").asText();
@@ -43,7 +44,7 @@ public class SbomToNisExcelFinal {
                 dependencyMap.put(ref, depList);
             }
 
-            // ref(purl) → groupId:artifactId:version
+            // purl -> group:artifact:version 매핑
             Map<String, String> refToGAV = new HashMap<>();
             for (JsonNode comp : components) {
                 String purl = comp.path("purl").asText();
@@ -71,18 +72,15 @@ public class SbomToNisExcelFinal {
                 String version = comp.path("version").asText("");
                 String group = comp.path("group").asText("");
                 String purl = comp.path("purl").asText("");
-                String alias = name;
                 String license = comp.path("licenses").path(0).path("license").path("id").asText("");
-
-                // 공급자 추출
                 String supplier = "";
+
                 if (comp.has("supplier") && comp.path("supplier").has("name")) {
                     supplier = comp.path("supplier").path("name").asText("");
                 } else if (comp.has("publisher")) {
                     supplier = comp.path("publisher").asText("");
                 }
 
-                // SHA-256 해시
                 String hash = "";
                 JsonNode hashes = comp.path("hashes");
                 if (hashes.isArray()) {
@@ -96,7 +94,6 @@ public class SbomToNisExcelFinal {
 
                 String path = "WEB-INF/lib/" + name + "-" + version + ".jar";
 
-                // 의존성: group:artifact:version 형식, 줄바꿈으로 정리
                 List<String> deps = dependencyMap.getOrDefault(purl, Collections.emptyList());
                 List<String> depGAVs = new ArrayList<>();
                 for (String ref : deps) {
@@ -105,31 +102,33 @@ public class SbomToNisExcelFinal {
                 }
                 String depStr = String.join("\n", depGAVs);
 
-                row.createCell(col++).setCellValue("CycloneDX");       // 1
-                row.createCell(col++).setCellValue("Deployed");        // 2
-                row.createCell(col++).setCellValue(cyclonedxNo);       // 3
-                row.createCell(col++).setCellValue("");                // 4
-                row.createCell(col++).setCellValue(sbomId);            // 5
-                row.createCell(col++).setCellValue("ETS");             // 6
-                row.createCell(col++).setCellValue("1.0");             // 7
-                row.createCell(col++).setCellValue(name);              // 8
-                row.createCell(col++).setCellValue(alias);             // 9
-                row.createCell(col++).setCellValue(version);           // 10
-                row.createCell(col++).setCellValue(supplier);          // 11
-                row.createCell(col++).setCellValue(hash);              // 12
-                row.createCell(col++).setCellValue(path);              // 13
-                row.createCell(col++).setCellValue(purl);              // 14
-                row.createCell(col++).setCellValue(depStr);            // 15
-                row.createCell(col++).setCellValue(timestamp);         // 16
-                row.createCell(col++).setCellValue(license);           // 17
-                row.createCell(col++).setCellValue("NVD");             // 18
-                row.createCell(col++).setCellValue("");                // 19
-                row.createCell(col++).setCellValue(generatedAt);       // 20
+                // 셀 순서대로 값 세팅
+                row.createCell(col++).setCellValue("CycloneDX");
+                row.createCell(col++).setCellValue("Deployed");
+                row.createCell(col++).setCellValue(cyclonedxNo);
+                row.createCell(col++).setCellValue("");
+                row.createCell(col++).setCellValue(sbomId);
+                row.createCell(col++).setCellValue("ETS");
+                row.createCell(col++).setCellValue("1.0");
+                row.createCell(col++).setCellValue(name);
+                row.createCell(col++).setCellValue(name);
+                row.createCell(col++).setCellValue(version);
+                row.createCell(col++).setCellValue(supplier);
+                row.createCell(col++).setCellValue(hash);
+                row.createCell(col++).setCellValue(path);
+                row.createCell(col++).setCellValue("관리자");
+                row.createCell(col++).setCellValue(purl);
+                row.createCell(col++).setCellValue(depStr);
+                row.createCell(col++).setCellValue(timestamp);
+                row.createCell(col++).setCellValue(license);
+                row.createCell(col++).setCellValue(""); // Vul. DB
+                row.createCell(col++).setCellValue(""); // Vul. Info
+                row.createCell(col++).setCellValue(generatedAt);
             }
 
             try (FileOutputStream out = new FileOutputStream(outputExcelPath)) {
                 workbook.write(out);
-                System.out.println("NIS-SBOM Excel 생성 완료: " + outputExcelPath);
+                System.out.println("생성 완료: " + outputExcelPath);
             }
             workbook.close();
 
