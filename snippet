@@ -1,53 +1,57 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.util.Iterator;
 import java.util.Map;
 
-public class JsonToExcelConverter {
+public class JsonToTsvConverter {
     public static void main(String[] args) {
         String inputJsonPath = "bom.json";   // 입력 JSON 파일 경로
-        String outputExcelPath = "bom.xlsx"; // 출력 Excel 파일 경로
+        String outputTextPath = "bom.txt";   // 출력 텍스트 파일 경로
 
         try {
             // JSON 파일 읽기
             ObjectMapper mapper = new ObjectMapper();
             JsonNode rootNode = mapper.readTree(new File(inputJsonPath));
 
-            // Excel 워크북 및 시트 생성
-            Workbook workbook = new XSSFWorkbook();
-            Sheet sheet = workbook.createSheet("SBOM");
-
-            // 헤더 생성
-            Row headerRow = sheet.createRow(0);
-            int headerColIndex = 0;
-            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                Cell cell = headerRow.createCell(headerColIndex++);
-                cell.setCellValue(field.getKey());
+            // 구성 요소 배열 추출
+            JsonNode componentsNode = rootNode.get("components");
+            if (componentsNode == null || !componentsNode.isArray()) {
+                System.out.println("'components' 배열을 찾을 수 없습니다.");
+                return;
             }
 
-            // 데이터 행 생성
-            Row dataRow = sheet.createRow(1);
-            int dataColIndex = 0;
-            fields = rootNode.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                Cell cell = dataRow.createCell(dataColIndex++);
-                cell.setCellValue(field.getValue().asText());
+            // 출력 파일 작성
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputTextPath))) {
+                // 헤더 작성
+                if (componentsNode.size() > 0) {
+                    JsonNode firstComponent = componentsNode.get(0);
+                    Iterator<String> fieldNames = firstComponent.fieldNames();
+                    while (fieldNames.hasNext()) {
+                        writer.write(fieldNames.next());
+                        if (fieldNames.hasNext()) {
+                            writer.write("\t");
+                        }
+                    }
+                    writer.newLine();
+                }
+
+                // 각 구성 요소에 대해 행 작성
+                for (JsonNode component : componentsNode) {
+                    Iterator<Map.Entry<String, JsonNode>> fields = component.fields();
+                    while (fields.hasNext()) {
+                        Map.Entry<String, JsonNode> field = fields.next();
+                        writer.write(field.getValue().asText());
+                        if (fields.hasNext()) {
+                            writer.write("\t");
+                        }
+                    }
+                    writer.newLine();
+                }
             }
 
-            // Excel 파일 저장
-            try (FileOutputStream fileOut = new FileOutputStream(outputExcelPath)) {
-                workbook.write(fileOut);
-            }
-
-            workbook.close();
-            System.out.println("Excel 파일이 성공적으로 생성되었습니다: " + outputExcelPath);
+            System.out.println("텍스트 파일이 성공적으로 생성되었습니다: " + outputTextPath);
         } catch (IOException e) {
             e.printStackTrace();
         }
