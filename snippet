@@ -1,31 +1,55 @@
-<build>
-  <plugins>
-    <plugin>
-      <groupId>org.cyclonedx</groupId>
-      <artifactId>cyclonedx-maven-plugin</artifactId>
-      <version>2.9.1</version>
-      <executions>
-        <execution>
-          <phase>package</phase>
-          <goals>
-            <goal>makeAggregateBom</goal>
-          </goals>
-        </execution>
-      </executions>
-      <configuration>
-        <projectType>library</projectType>
-        <schemaVersion>1.6</schemaVersion>
-        <includeBomSerialNumber>true</includeBomSerialNumber>
-        <includeCompileScope>true</includeCompileScope>
-        <includeProvidedScope>true</includeProvidedScope>
-        <includeRuntimeScope>true</includeRuntimeScope>
-        <includeSystemScope>true</includeSystemScope>
-        <includeTestScope>false</includeTestScope>
-        <includeLicenseText>false</includeLicenseText>
-        <outputFormat>all</outputFormat>
-        <outputName>bom</outputName>
-        <outputDirectory>${project.build.directory}</outputDirectory>
-      </configuration>
-    </plugin>
-  </plugins>
-</build>
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.*;
+import java.util.Iterator;
+import java.util.Map;
+
+public class JsonToExcelConverter {
+    public static void main(String[] args) {
+        String inputJsonPath = "bom.json";   // 입력 JSON 파일 경로
+        String outputExcelPath = "bom.xlsx"; // 출력 Excel 파일 경로
+
+        try {
+            // JSON 파일 읽기
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(new File(inputJsonPath));
+
+            // Excel 워크북 및 시트 생성
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("SBOM");
+
+            // 헤더 생성
+            Row headerRow = sheet.createRow(0);
+            int headerColIndex = 0;
+            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                Cell cell = headerRow.createCell(headerColIndex++);
+                cell.setCellValue(field.getKey());
+            }
+
+            // 데이터 행 생성
+            Row dataRow = sheet.createRow(1);
+            int dataColIndex = 0;
+            fields = rootNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                Cell cell = dataRow.createCell(dataColIndex++);
+                cell.setCellValue(field.getValue().asText());
+            }
+
+            // Excel 파일 저장
+            try (FileOutputStream fileOut = new FileOutputStream(outputExcelPath)) {
+                workbook.write(fileOut);
+            }
+
+            workbook.close();
+            System.out.println("Excel 파일이 성공적으로 생성되었습니다: " + outputExcelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
