@@ -1,139 +1,21 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+public class SampleDto {
 
-import java.io.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+    @JsonDeserialize(using = PositiveNumberToYesNoDeserializer.class)
+    private String isPositive;
 
-public class SbomToNisExcelFinal {
-    public static void main(String[] args) {
-        String inputJsonPath = "C:\\path\\to\\bom.json";
-        String outputExcelPath = "C:\\path\\to\\bom.xlsx";
+    // getter, setter
 
-        List<String> headers = Arrays.asList(
-                "01. SBOM Standard", "02. SBOM Type", "03. CycloneDX No.", "04. SPDX Doc. ID", "05. SBOM ID",
-                "06. Product Name", "07. Product Version", "08. Component Name", "09. Component Alias", "10. Component Version",
-                "11. Component Supplier Name", "12. Component Hash", "13. Component Path", "14. SBOM 작성자 정보", "15. Unique Identifier",
-                "16. Dependency Relationship", "17. Timestamp", "18. License Name·Version", "19. Vul. DB", "20. Vul. Info",
-                "21. SBOM 생성일시"
-        );
+    public static class PositiveNumberToYesNoDeserializer extends JsonDeserializer<String> {
+        @Override
+        public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            String value = p.getText();
 
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(new File(inputJsonPath));
-            JsonNode components = root.path("components");
-            JsonNode dependencies = root.path("dependencies");
-
-            String cyclonedxNo = root.path("serialNumber").asText("");
-            String timestamp = root.path("metadata").path("timestamp").asText("");
-            String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            String sbomId = "WINITECH-" + today + "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-            String generatedAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-
-            // 종속성 정리
-            Map<String, List<String>> dependencyMap = new HashMap<>();
-            for (JsonNode dep : dependencies) {
-                String ref = dep.path("ref").asText();
-                List<String> depList = new ArrayList<>();
-                for (JsonNode d : dep.path("dependsOn")) {
-                    depList.add(d.asText());
-                }
-                dependencyMap.put(ref, depList);
+            try {
+                int num = Integer.parseInt(value);
+                return num > 0 ? "Y" : "N";
+            } catch (NumberFormatException e) {
+                return "N";
             }
-
-            // purl -> group:artifact:version 매핑
-            Map<String, String> refToGAV = new HashMap<>();
-            for (JsonNode comp : components) {
-                String purl = comp.path("purl").asText();
-                String group = comp.path("group").asText();
-                String name = comp.path("name").asText();
-                String version = comp.path("version").asText();
-                if (!purl.isEmpty()) {
-                    refToGAV.put(purl, group + ":" + name + ":" + version);
-                }
-            }
-
-            Workbook workbook = new XSSFWorkbook();
-            Sheet sheet = workbook.createSheet("NIS-SBOM");
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < headers.size(); i++) {
-                headerRow.createCell(i).setCellValue(headers.get(i));
-            }
-
-            int rowIdx = 1;
-            for (JsonNode comp : components) {
-                Row row = sheet.createRow(rowIdx++);
-                int col = 0;
-
-                String name = comp.path("name").asText("");
-                String version = comp.path("version").asText("");
-                String group = comp.path("group").asText("");
-                String purl = comp.path("purl").asText("");
-                String license = comp.path("licenses").path(0).path("license").path("id").asText("");
-                String supplier = "";
-
-                if (comp.has("supplier") && comp.path("supplier").has("name")) {
-                    supplier = comp.path("supplier").path("name").asText("");
-                } else if (comp.has("publisher")) {
-                    supplier = comp.path("publisher").asText("");
-                }
-
-                String hash = "";
-                JsonNode hashes = comp.path("hashes");
-                if (hashes.isArray()) {
-                    for (JsonNode h : hashes) {
-                        if ("SHA-256".equalsIgnoreCase(h.path("alg").asText())) {
-                            hash = h.path("content").asText();
-                            break;
-                        }
-                    }
-                }
-
-                String path = "WEB-INF/lib/" + name + "-" + version + ".jar";
-
-                List<String> deps = dependencyMap.getOrDefault(purl, Collections.emptyList());
-                List<String> depGAVs = new ArrayList<>();
-                for (String ref : deps) {
-                    String gav = refToGAV.getOrDefault(ref, "");
-                    if (!gav.isEmpty()) depGAVs.add(gav);
-                }
-                String depStr = String.join("\n", depGAVs);
-
-                // 셀 순서대로 값 세팅
-                row.createCell(col++).setCellValue("CycloneDX");
-                row.createCell(col++).setCellValue("Deployed");
-                row.createCell(col++).setCellValue(cyclonedxNo);
-                row.createCell(col++).setCellValue("");
-                row.createCell(col++).setCellValue(sbomId);
-                row.createCell(col++).setCellValue("ETS");
-                row.createCell(col++).setCellValue("1.0");
-                row.createCell(col++).setCellValue(name);
-                row.createCell(col++).setCellValue(name);
-                row.createCell(col++).setCellValue(version);
-                row.createCell(col++).setCellValue(supplier);
-                row.createCell(col++).setCellValue(hash);
-                row.createCell(col++).setCellValue(path);
-                row.createCell(col++).setCellValue("관리자");
-                row.createCell(col++).setCellValue(purl);
-                row.createCell(col++).setCellValue(depStr);
-                row.createCell(col++).setCellValue(timestamp);
-                row.createCell(col++).setCellValue(license);
-                row.createCell(col++).setCellValue(""); // Vul. DB
-                row.createCell(col++).setCellValue(""); // Vul. Info
-                row.createCell(col++).setCellValue(generatedAt);
-            }
-
-            try (FileOutputStream out = new FileOutputStream(outputExcelPath)) {
-                workbook.write(out);
-                System.out.println("생성 완료: " + outputExcelPath);
-            }
-            workbook.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
