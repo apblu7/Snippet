@@ -1,21 +1,6 @@
-public class SampleDto {
-
-    @JsonDeserialize(using = PositiveNumberToYesNoDeserializer.class)
-    private String isPositive;
-
-    // getter, setter
-
-    public static class PositiveNumberToYesNoDeserializer extends JsonDeserializer<String> {
-        @Override
-        public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            String value = p.getText();
-
-            try {
-                int num = Integer.parseInt(value);
-                return num > 0 ? "Y" : "N";
-            } catch (NumberFormatException e) {
-                return "N";
-            }
-        }
-    }
-}
+<DefaultRolloverStrategy max="10">
+    <Delete basePath="/opt/apache-tomcat-9.0.89/logs/ets" maxDepth="1">
+        <IfLastModified age="10d" />
+        <IfFileName glob="ets-*.log*" />
+    </Delete>
+</DefaultRolloverStrategy>
