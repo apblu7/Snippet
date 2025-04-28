@@ -4,23 +4,19 @@ setlocal enabledelayedexpansion
 set TARGET_BAT=.\ppk-tomcat-log-ets.bat
 set SNAKETAIL_PATH=.\ 
 set LOG_FILE=%SNAKETAIL_PATH%%TARGET_BAT%.log
+set WINDOW_TITLE=MY_SPECIAL_CALL
 
 if exist "%LOG_FILE%" del "%LOG_FILE%"
 
-rem call을 백그라운드 실행 + PID 저장
-start "" cmd /c "call \"%TARGET_BAT%\" >> \"%LOG_FILE%\" 2>&1" 
+rem 고유 창 제목으로 call 띄우기
+start "%WINDOW_TITLE%" cmd /k "call \"%TARGET_BAT%\" >> \"%LOG_FILE%\" 2>&1"
 
-rem 백그라운드로 띄운 프로세스의 PID를 찾아서 저장
-for /f "tokens=2" %%a in ('tasklist /fi "imagename eq cmd.exe" /fo list ^| findstr /i "PID"') do (
-    set "CMD_PID=%%a"
-)
-
-rem baretail 실행 (메인 프로세스)
+rem baretail을 메인 프로세스로 띄우기
 "%SNAKETAIL_PATH%baretail.exe" "%LOG_FILE%"
 
-rem baretail이 종료되면 백그라운드 call도 강제 종료
-if defined CMD_PID (
-    taskkill /PID !CMD_PID! /F
+rem baretail이 닫히면 고유 창 제목으로 띄운 cmd 종료
+for /f "tokens=2 delims==" %%i in ('tasklist /v /fo list ^| findstr /i "%WINDOW_TITLE%"') do (
+    taskkill /pid %%i /f
 )
 
 exit /b
