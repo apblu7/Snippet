@@ -1,1 +1,1 @@
-Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*MY_TAIL_JOB*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
