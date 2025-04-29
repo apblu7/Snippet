@@ -1,1 +1,1 @@
-powershell -Command "Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*%TAIL_MARK%*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+Get-Process | Where-Object { $_.MainWindowTitle -like '*찾을문자열*' }
