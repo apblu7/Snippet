@@ -5,19 +5,19 @@ rem === 설정 ===
 set TARGET_BAT=.\ppk-tomcat-log-ets.bat
 set SNAKETAIL_PATH=.\ 
 set LOG_FILE=.\ppk-tomcat-log-ets.bat.log
-set WINDOW_TITLE=MY_SPECIAL_CALL
+set TAIL_MARK=MY_TAIL_JOB
 
 rem === 기존 로그 삭제 ===
 if exist "%LOG_FILE%" del "%LOG_FILE%"
 
-rem === call을 별도 창으로 (고유 창 제목 지정) ===
-start "%WINDOW_TITLE%" cmd /k "call \"%TARGET_BAT%\" >> \"%LOG_FILE%\" 2>&1"
+rem === call을 별도 창으로 (명령줄에 키워드 심기) ===
+start "" cmd /k "call \"%TARGET_BAT%\" %TAIL_MARK% >> \"%LOG_FILE%\" 2>&1"
 
-rem === baretail을 현재 프로세스에서 실행 ===
+rem === baretail을 메인 프로세스에서 실행 ===
 "%SNAKETAIL_PATH%baretail.exe" "%LOG_FILE%"
 
-rem === baretail이 꺼지면, 고유 창 제목 가진 cmd 프로세스 강제 종료 ===
-for /f "tokens=2 delims== " %%i in ('tasklist /v /fo list ^| findstr /i "%WINDOW_TITLE%"') do (
+rem === baretail 종료되면 명령줄 키워드로 프로세스 종료 ===
+for /f "tokens=2 delims== " %%i in ('wmic process where "CommandLine like '%%%TAIL_MARK%%%'" get ProcessId /value ^| find "="') do (
     taskkill /pid %%i /f
 )
 
