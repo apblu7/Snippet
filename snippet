@@ -1,21 +1,23 @@
 @echo off
 setlocal enabledelayedexpansion
 
+rem === 설정 ===
 set TARGET_BAT=.\ppk-tomcat-log-ets.bat
 set SNAKETAIL_PATH=.\ 
-set LOG_FILE=%SNAKETAIL_PATH%%TARGET_BAT%.log
+set LOG_FILE=.\ppk-tomcat-log-ets.bat.log
 set WINDOW_TITLE=MY_SPECIAL_CALL
 
+rem === 기존 로그 삭제 ===
 if exist "%LOG_FILE%" del "%LOG_FILE%"
 
-rem 고유 창 제목으로 call 띄우기
+rem === call을 별도 창으로 (고유 창 제목 지정) ===
 start "%WINDOW_TITLE%" cmd /k "call \"%TARGET_BAT%\" >> \"%LOG_FILE%\" 2>&1"
 
-rem baretail을 메인 프로세스로 띄우기
+rem === baretail을 현재 프로세스에서 실행 ===
 "%SNAKETAIL_PATH%baretail.exe" "%LOG_FILE%"
 
-rem baretail이 닫히면 고유 창 제목으로 띄운 cmd 종료
-for /f "tokens=2 delims==" %%i in ('tasklist /v /fo list ^| findstr /i "%WINDOW_TITLE%"') do (
+rem === baretail이 꺼지면, 고유 창 제목 가진 cmd 프로세스 강제 종료 ===
+for /f "tokens=2 delims== " %%i in ('tasklist /v /fo list ^| findstr /i "%WINDOW_TITLE%"') do (
     taskkill /pid %%i /f
 )
 
