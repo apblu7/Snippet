@@ -1,1 +1,1 @@
-Get-Process | Where-Object { $_.MainWindowTitle -like '*찾을문자열*' }
+Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine
