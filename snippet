@@ -1,1 +1,1 @@
-DISM /Online /Cleanup-Image /RestoreHealth
+Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*찾을문자열*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
