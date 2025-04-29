@@ -1,1 +1,1 @@
-Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*MY_TAIL_JOB*' }
+Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*MY_TAIL_JOB*' } | Select-Object ProcessId, CommandLine
