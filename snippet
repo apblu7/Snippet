@@ -1,1 +1,21 @@
-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+public static <T> void logResponse(Logger logger, ResponseEntity<T> response, String level) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("HTTP Response Log\n")
+      .append("Status: ").append(response.getStatusCode()).append("\n")
+      .append("Headers: ").append(response.getHeaders()).append("\n")
+      .append("Body: ").append(response.getBody());
+
+    String message = sb.toString();
+
+    if ("DEBUG".equalsIgnoreCase(level)) {
+        logger.debug(message);
+    } else if ("INFO".equalsIgnoreCase(level)) {
+        logger.info(message);
+    } else if ("WARN".equalsIgnoreCase(level)) {
+        logger.warn(message);
+    } else if ("ERROR".equalsIgnoreCase(level)) {
+        logger.error(message);
+    } else {
+        logger.info(message); // fallback
+    }
+}
