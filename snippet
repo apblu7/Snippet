@@ -1,13 +1,20 @@
-@echo off
-setlocal enabledelayedexpansion
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
-REM 1. SSH로 대상 시스템에서 UTC 날짜 조회
-for /f "delims=" %%a in ('ssh -i your_key.pem user@host "date -u +%%F"') do (
-    set LOGDATE=%%a
-)
+import java.util.concurrent.TimeUnit;
 
-REM 2. 확인 출력 (선택사항)
-echo 대상 시스템 UTC 날짜: %LOGDATE%
+public class RetryContextHolder {
 
-REM 3. 해당 날짜 로그 파일 tail -f
-ssh -i your_key.pem user@host "tail -f /path/to/logs/localhost_access_log.%LOGDATE%.log"
+    private static final Cache<String, Integer> retryCountCache =
+            CacheBuilder.newBuilder()
+                    .expireAfterWrite(1, TimeUnit.MINUTES)
+                    .build();
+
+    public static void setRetryCount(String contextName, int count) {
+        retryCountCache.put(contextName, count);
+    }
+
+    public static Integer getRetryCount(String contextName) {
+        return retryCountCache.getIfPresent(contextName);
+    }
+}
