@@ -1,74 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM 현지 날짜와 시간
-for /f "tokens=1-4 delims=/ " %%a in ('date /t') do (
-    set YYYY=%%d
-    set MM=%%b
-    set DD=%%c
-)
-for /f "tokens=1-2 delims=: " %%a in ('time /t') do (
-    set HH=%%a
+REM 1. SSH로 대상 시스템에서 UTC 날짜 조회
+for /f "delims=" %%a in ('ssh -i your_key.pem user@host "date -u +%%F"') do (
+    set LOGDATE=%%a
 )
 
-REM 12시간제를 24시간제로 변환 (오후 처리)
-echo %time% | findstr "PM" >nul
-if %errorlevel%==0 (
-    if %HH% lss 12 set /a HH=HH+12
-) else (
-    if %HH%==12 set HH=00
-)
+REM 2. 확인 출력 (선택사항)
+echo 대상 시스템 UTC 날짜: %LOGDATE%
 
-REM 한국 → UTC-0로 9시간 빼기
-set /a HH=HH-9
-if !HH! lss 0 (
-    set /a HH+=24
-    set /a DD-=1
-)
-
-REM 날짜 보정 (하루 감소)
-if !DD! lss 1 (
-    set /a MM-=1
-    if !MM! lss 1 (
-        set MM=12
-        set /a YYYY-=1
-    )
-    REM 월별 마지막 일자 계산
-    set days=31 28 31 30 31 30 31 31 30 31 30 31
-    set /a idx=MM-1
-    for %%d in (%days%) do (
-        set /a idx-=1
-        if !idx! lss 0 (
-            set days_in_month=%%d
-            goto done_days
-        )
-    )
-    :done_days
-    REM 윤년 처리
-    if %MM%==2 (
-        set /a leap=YYYY %% 4
-        if !leap!==0 set days_in_month=29
-    )
-    set DD=!days_in_month!
-)
-
-REM 두 자리수 포맷 맞추기
-if %MM% lss 10 set MM=0%MM%
-if %DD% lss 10 set DD=0%DD%
-
-REM 최종 날짜 변수
-set TODAY=%YYYY%-%MM%-%DD%
-
-echo 오늘 (UTC-0 기준): %TODAY%
-
-REM 로그 파일 이름
-set LOGFILE=localhost_access_log.%TODAY%.log
-
-echo 로그 파일 이름: %LOGFILE%
-
-REM 예: 파일 존재 확인
-if exist %LOGFILE% (
-    type %LOGFILE%
-) else (
-    echo 파일이 존재하지 않습니다: %LOGFILE%
-)
+REM 3. 해당 날짜 로그 파일 tail -f
+ssh -i your_key.pem user@host "tail -f /path/to/logs/localhost_access_log.%LOGDATE%.log"
