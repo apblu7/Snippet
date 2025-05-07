@@ -1,20 +1,16 @@
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RetryContextHolder {
 
-    private static final Cache<String, Integer> retryCountCache =
-            CacheBuilder.newBuilder()
-                    .expireAfterWrite(1, TimeUnit.MINUTES)
-                    .build();
+    private static final ConcurrentHashMap<Long, Integer> retryCountMap = new ConcurrentHashMap<>();
 
-    public static void setRetryCount(String contextName, int count) {
-        retryCountCache.put(contextName, count);
+    // 현재 스레드 기준으로 저장
+    public static void setRetryCountForCurrentThread(int count) {
+        retryCountMap.put(Thread.currentThread().getId(), count);
     }
 
-    public static Integer getRetryCount(String contextName) {
-        return retryCountCache.getIfPresent(contextName);
+    // 현재 스레드 기준으로 조회
+    public static Integer getRetryCountForCurrentThread() {
+        return retryCountMap.get(Thread.currentThread().getId());
     }
 }
