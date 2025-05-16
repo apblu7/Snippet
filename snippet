@@ -1,6 +1,2 @@
-docker run -dit \
-  -p 80:80 \
-  -p 8080:8080 \
-  -p 22:22 \
-  --name my-container \
-  ubuntu
+docker inspect <컨테이너ID> --format '{{.Config.Cmd}}'
+docker inspect <컨테이너ID> --format '{{.Config.Entrypoint}}'
