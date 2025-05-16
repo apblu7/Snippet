@@ -1,2 +1,2 @@
-docker inspect <컨테이너ID> --format '{{.Config.Cmd}}'
-docker inspect <컨테이너ID> --format '{{.Config.Entrypoint}}'
+apt download openssh-server
+apt download $(apt-cache depends openssh-server | grep "Depends:" | awk '{print $2}')
