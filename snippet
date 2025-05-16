@@ -1,2 +1,1 @@
-apt download openssh-server
-apt download $(apt-cache depends openssh-server | grep "Depends:" | awk '{print $2}')
+apt-cache depends openssh-server | grep "Depends:" | awk '{print $2}' | xargs -n1 apt download
