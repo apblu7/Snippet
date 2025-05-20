@@ -1,4 +1,1 @@
-mkdir iptables-debs
-cd iptables-debs
-
-apt-rdepends iptables | grep -v "^ " | xargs apt-get download
+iptables -A OUTPUT -o lo -j ACCEPT
