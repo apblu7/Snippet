@@ -1,1 +1,1 @@
-iptables -A OUTPUT -o lo -j ACCEPT
+iptables -P OUTPUT DROP && iptables -A OUTPUT -d 127.0.0.1 -j ACCEPT
