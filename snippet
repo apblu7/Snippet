@@ -1,2 +1,1 @@
-apt-get download curl
-apt-rdepends curl | grep -v "^ " | xargs apt-get download
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
