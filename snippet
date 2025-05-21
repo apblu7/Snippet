@@ -1,10 +1,9 @@
-
-import OpenAI from "openai";
-const client = new OpenAI();
-
-const response = await client.responses.create({
-    model: "gpt-4.1",
-    input: "Write a one-sentence bedtime story about a unicorn.",
-});
-
-console.log(response.output_text);
+curl https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4-turbo",
+    "messages": [
+      {"role": "user", "content": "안녕!"}
+    ]
+  }'
