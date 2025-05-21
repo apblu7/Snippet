@@ -1,1 +1,16 @@
+# 1. 기본 정책
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+# 2. 루프백 허용 (자기 자신과의 통신)
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# 3. 이미 확립된 연결에 대한 응답 허용
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# 4. 외부에서 들어오는 특정 포트 허용 (예: HTTP, PostgreSQL)
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5432 -j ACCEPT
