@@ -1,16 +1,27 @@
-# 1. 기본 정책
-iptables -P INPUT DROP
-iptables -P OUTPUT DROP
-iptables -P FORWARD DROP
+# 베이스 이미지 선택 (예: Ubuntu)
+FROM ubuntu:20.04
 
-# 2. 루프백 허용 (자기 자신과의 통신)
-iptables -A INPUT -i lo -j ACCEPT
-iptables -A OUTPUT -o lo -j ACCEPT
+# 쉘 스크립트와 설치 파일 복사
+COPY iptables-offline.deb /home/def/iptables-offline.deb
+COPY start.sh /home/def/start.sh
 
-# 3. 이미 확립된 연결에 대한 응답 허용
-iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+# 필요한 권한 부여
+RUN chmod +x /home/def/start.sh
 
-# 4. 외부에서 들어오는 특정 포트 허용 (예: HTTP, PostgreSQL)
-iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-iptables -A INPUT -p tcp --dport 5432 -j ACCEPT
+# 필수 도구 설치 (기본적으로 dpkg 등은 있음, 없으면 coreutils 등도 설치)
+RUN apt-get update && apt-get install -y netbase iproute2 iputils-ping
+
+# 오프라인이라면 여기에 필요한 패키지들도 미리 복사해놓고 설치
+# 예: RUN dpkg -i /path/to/package.deb
+
+# Tomcat 및 JDK는 미리 옮겨놓고 아래처럼 압축 해제
+COPY jdk1.7.0_12 /opt/jdk1.7.0_12
+COPY apache-tomcat-6.0.18 /opt/apache-tomcat-6.0.18
+
+# 환경 변수 설정
+ENV JAVA_HOME=/opt/jdk1.7.0_12
+ENV CATALINA_HOME=/opt/apache-tomcat-6.0.18
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# 컨테이너 시작 시 실행될 명령
+CMD ["/home/def/start.sh"]
