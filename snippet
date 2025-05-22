@@ -1,1 +1,7 @@
-041M6NEGIwo0nMxagN3F6A1XnJaq0hQpZCdWyPMWpEdVyniC3sI0amPVWGifsCDP6iSEByjgmxT3BlbkFJVE-TIXBRE-7XXbWUIY2WP__4_88N8V6DJ1XqJq__ES297mw8rNTGkaZdwj4qx80YBx2OfhzjEA
+SELECT r.rolname AS role,
+       n.nspname AS schema,
+       has_schema_privilege(r.rolname, n.nspname, 'USAGE') AS usage,
+       has_schema_privilege(r.rolname, n.nspname, 'CREATE') AS create
+FROM pg_namespace n
+CROSS JOIN pg_roles r
+ORDER BY n.nspname, r.rolname;
