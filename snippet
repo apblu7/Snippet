@@ -1,7 +1,35 @@
-SELECT r.rolname AS role,
-       n.nspname AS schema,
-       has_schema_privilege(r.rolname, n.nspname, 'USAGE') AS usage,
-       has_schema_privilege(r.rolname, n.nspname, 'CREATE') AS create
-FROM pg_namespace n
-CROSS JOIN pg_roles r
-ORDER BY n.nspname, r.rolname;
+// 메시지 구성
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of(
+                "role", "user",
+                "content", prompt
+        ));
+
+        // 요청 본문 구성
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-3.5-turbo"); // 또는 gpt-4
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0.7);
+
+        // 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(OPENAI_API_KEY);
+
+        HttpEntity<String> request = new HttpEntity<>(gson.toJson(requestBody), headers);
+
+        // 요청 보내기
+        ResponseEntity<String> response = restTemplate.postForEntity(GPT_API_URL, request, String.class);
+
+        // 응답 처리
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            JsonObject json = JsonParser.parseString(response.getBody()).getAsJsonObject();
+            return json
+                    .getAsJsonArray("choices")
+                    .get(0)
+                    .getAsJsonObject()
+                    .getAsJsonObject("message")
+                    .get("content")
+                    .getAsString();
+        } else {
+            throw new RuntimeException("Ope
