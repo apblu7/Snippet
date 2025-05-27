@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <title>HTTP 테스트 리포트</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f7f7f7; }
-    .result { background: #fff; border: 1px solid #ddd; margin-bottom: 20px; padding: 15px; border-radius: 5px; }
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    .result { background: #fff; border: 1px solid #ccc; margin-bottom: 20px; padding: 15px; border-radius: 6px; }
+    .status { font-weight: bold; }
     .success { color: green; }
     .fail { color: red; }
     pre { background: #f0f0f0; padding: 10px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
-    code { font-family: monospace; }
+    summary { font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -17,73 +18,68 @@
   <div id="report"></div>
 
   <script>
-    const tests = [
+    // 1. 초기 요청 목록 정의
+    const requests = [
       {
-        name: 'Get Users with Auth',
-        method: 'GET',
-        url: 'https://jsonplaceholder.typicode.com/users',
+        name: "사용자 목록",
+        method: "GET",
+        url: "https://jsonplaceholder.typicode.com/users",
         headers: {
-          'Authorization': 'Bearer dummy-token',
-          'Custom-Header': 'abc123'
+          "Accept": "application/json"
         }
       },
       {
-        name: '404 Not Found Test',
-        method: 'GET',
-        url: 'https://jsonplaceholder.typicode.com/invalid',
+        name: "없는 페이지 테스트",
+        method: "GET",
+        url: "https://jsonplaceholder.typicode.com/404",
         headers: {}
       }
     ];
 
     const report = document.getElementById('report');
 
-    async function runTests() {
-      for (const test of tests) {
-        const box = document.createElement('div');
-        box.className = 'result';
+    // 2. UI 먼저 구성
+    const elements = requests.map((req, index) => {
+      const box = document.createElement('div');
+      box.className = 'result';
+      box.id = `result-${index}`;
+      box.innerHTML = `
+        <h2>${req.name}</h2>
+        <p><span class="status">[요청 전]</span></p>
+        <details><summary>Request</summary><pre>${req.method} ${req.url}
+${Object.entries(req.headers).map(([k, v]) => `${k}: ${v}`).join('\n')}</pre></details>
+        <details open><summary>Response Headers</summary><pre>Waiting...</pre></details>
+        <details open><summary>Response Body</summary><pre>Waiting...</pre></details>
+      `;
+      report.appendChild(box);
+      return box;
+    });
 
-        const requestOptions = {
-          method: test.method,
-          headers: test.headers
-        };
+    // 3. 요청 비동기 실행 및 결과 삽입
+    requests.forEach((req, index) => {
+      const box = elements[index];
+      const statusEl = box.querySelector('.status');
+      const resHeadersEl = box.querySelectorAll('pre')[1];
+      const resBodyEl = box.querySelectorAll('pre')[2];
 
-        const start = performance.now();
-        try {
-          const res = await fetch(test.url, requestOptions);
-          const duration = (performance.now() - start).toFixed(2);
-          const body = await res.text();
-          const resHeaders = Array.from(res.headers.entries())
-            .map(([k, v]) => `${k}: ${v}`)
-            .join('\n');
+      fetch(req.url, {
+        method: req.method,
+        headers: req.headers
+      }).then(async res => {
+        const headers = Array.from(res.headers.entries()).map(([k, v]) => `${k}: ${v}`).join('\n');
+        const body = await res.text();
 
-          box.innerHTML = `
-            <h2>${test.name}</h2>
-            <p>Status: <strong class="${res.ok ? 'success' : 'fail'}">${res.status} ${res.statusText}</strong></p>
-            <p>Time: ${duration} ms</p>
-            <details>
-              <summary><strong>Request Headers</strong></summary>
-              <pre>${Object.entries(test.headers).map(([k, v]) => `${k}: ${v}`).join('\n')}</pre>
-            </details>
-            <details>
-              <summary><strong>Response Headers</strong></summary>
-              <pre>${resHeaders}</pre>
-            </details>
-            <details open>
-              <summary><strong>Response Body</strong></summary>
-              <pre>${body.slice(0, 500)}</pre>
-            </details>
-          `;
-        } catch (err) {
-          box.innerHTML = `
-            <h2>${test.name}</h2>
-            <p class="fail">Error: ${err.message}</p>
-          `;
-        }
-        report.appendChild(box);
-      }
-    }
-
-    runTests();
+        statusEl.textContent = `${res.status} ${res.statusText}`;
+        statusEl.className = 'status ' + (res.ok ? 'success' : 'fail');
+        resHeadersEl.textContent = headers || '[없음]';
+        resBodyEl.textContent = body || '[빈 응답]';
+      }).catch(err => {
+        statusEl.textContent = `요청 실패`;
+        statusEl.className = 'status fail';
+        resHeadersEl.textContent = '';
+        resBodyEl.textContent = err.message;
+      });
+    });
   </script>
 </body>
 </html>
