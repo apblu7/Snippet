@@ -1,1 +1,89 @@
-server.tomcat.max-http-header-size=16384
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>HTTP 테스트 리포트</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f7f7f7; }
+    .result { background: #fff; border: 1px solid #ddd; margin-bottom: 20px; padding: 15px; border-radius: 5px; }
+    .success { color: green; }
+    .fail { color: red; }
+    pre { background: #f0f0f0; padding: 10px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+    code { font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>HTTP 테스트 리포트</h1>
+  <div id="report"></div>
+
+  <script>
+    const tests = [
+      {
+        name: 'Get Users with Auth',
+        method: 'GET',
+        url: 'https://jsonplaceholder.typicode.com/users',
+        headers: {
+          'Authorization': 'Bearer dummy-token',
+          'Custom-Header': 'abc123'
+        }
+      },
+      {
+        name: '404 Not Found Test',
+        method: 'GET',
+        url: 'https://jsonplaceholder.typicode.com/invalid',
+        headers: {}
+      }
+    ];
+
+    const report = document.getElementById('report');
+
+    async function runTests() {
+      for (const test of tests) {
+        const box = document.createElement('div');
+        box.className = 'result';
+
+        const requestOptions = {
+          method: test.method,
+          headers: test.headers
+        };
+
+        const start = performance.now();
+        try {
+          const res = await fetch(test.url, requestOptions);
+          const duration = (performance.now() - start).toFixed(2);
+          const body = await res.text();
+          const resHeaders = Array.from(res.headers.entries())
+            .map(([k, v]) => `${k}: ${v}`)
+            .join('\n');
+
+          box.innerHTML = `
+            <h2>${test.name}</h2>
+            <p>Status: <strong class="${res.ok ? 'success' : 'fail'}">${res.status} ${res.statusText}</strong></p>
+            <p>Time: ${duration} ms</p>
+            <details>
+              <summary><strong>Request Headers</strong></summary>
+              <pre>${Object.entries(test.headers).map(([k, v]) => `${k}: ${v}`).join('\n')}</pre>
+            </details>
+            <details>
+              <summary><strong>Response Headers</strong></summary>
+              <pre>${resHeaders}</pre>
+            </details>
+            <details open>
+              <summary><strong>Response Body</strong></summary>
+              <pre>${body.slice(0, 500)}</pre>
+            </details>
+          `;
+        } catch (err) {
+          box.innerHTML = `
+            <h2>${test.name}</h2>
+            <p class="fail">Error: ${err.message}</p>
+          `;
+        }
+        report.appendChild(box);
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>
