@@ -1,28 +1,23 @@
-@ControllerAdvice(basePackages = "com.example.api.controller") // 여기에 원하는 패키지
+@Component
 public class HeaderValidationAdvice {
 
-    private final CustomAuthProperties authProperties;
+    private final Properties authProperties;
 
-    public HeaderValidationAdvice(CustomAuthProperties authProperties) {
+    public HeaderValidationAdvice(@Qualifier("authHeaderProperties") Properties authProperties) {
         this.authProperties = authProperties;
     }
 
     @ModelAttribute
     public void validateHeader(HttpServletRequest request, HandlerMethod handlerMethod) {
-        Method method = handlerMethod.getMethod();
-        RequireHeaderValidation annotation = method.getAnnotation(RequireHeaderValidation.class);
+        String controller = handlerMethod.getBeanType().getSimpleName();
+        String method = handlerMethod.getMethod().getName();
+        String keyId = "user-key"; // 예시
 
-        if (annotation != null) {
-            String controllerName = handlerMethod.getBeanType().getSimpleName(); // 예: ExternalApiController
-            String methodName = method.getName();                                 // 예: getData
-            String keyId = annotation.keyId();                                    // 예: user-key
+        String headerValue = request.getHeader(keyId);
+        String expectedValue = authProperties.getProperty(controller + "." + method + "." + keyId);
 
-            String expectedValue = authProperties.getExpectedKey(controllerName, methodName, keyId);
-            String actualValue = request.getHeader(keyId);
-
-            if (!Objects.equals(expectedValue, actualValue)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "헤더 키 값이 유효하지 않음");
-            }
+        if (!Objects.equals(headerValue, expectedValue)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "인증 실패");
         }
     }
 }
