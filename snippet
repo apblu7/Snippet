@@ -1,40 +1,28 @@
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 8px;
-  font-family: monospace;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background-color: #fff; /* 예시 배경색 */
-  border-radius: 4px;
-  min-height: 32px; /* 최소 높이 설정 */
-  width: 100%; /* 부모 영역 전체 차지 */
-  box-sizing: border-box;
-}
+@ControllerAdvice(basePackages = "com.example.api.controller") // 여기에 원하는 패키지
+public class HeaderValidationAdvice {
 
-.summary-item.success {
-  background-color: #e8fbe8;
-}
+    private final CustomAuthProperties authProperties;
 
-.summary-item.fail {
-  background-color: #ffeaea;
-}
+    public HeaderValidationAdvice(CustomAuthProperties authProperties) {
+        this.authProperties = authProperties;
+    }
 
-.summary-item .col {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    @ModelAttribute
+    public void validateHeader(HttpServletRequest request, HandlerMethod handlerMethod) {
+        Method method = handlerMethod.getMethod();
+        RequireHeaderValidation annotation = method.getAnnotation(RequireHeaderValidation.class);
 
-.summary-item .name {
-  flex: 0 0 150px;
-}
+        if (annotation != null) {
+            String controllerName = handlerMethod.getBeanType().getSimpleName(); // 예: ExternalApiController
+            String methodName = method.getName();                                 // 예: getData
+            String keyId = annotation.keyId();                                    // 예: user-key
 
-.summary-item .status {
-  flex: 0 0 110px;
-}
+            String expectedValue = authProperties.getExpectedKey(controllerName, methodName, keyId);
+            String actualValue = request.getHeader(keyId);
 
-.summary-item .body {
-  flex: 1;
+            if (!Objects.equals(expectedValue, actualValue)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "헤더 키 값이 유효하지 않음");
+            }
+        }
+    }
 }
