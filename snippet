@@ -1,5 +1,38 @@
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface RequireHeaderValidation {
-    String keyId(); // ex: "user-key"
+import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
+
+@Aspect
+@Component
+public class HeaderValidationAspect {
+
+    @Around("@annotation(requireHeaderValidation)")
+    public Object validate(ProceedingJoinPoint joinPoint, RequireHeaderValidation requireHeaderValidation) throws Throwable {
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+        if (attributes == null) {
+            throw new IllegalStateException("No request context available");
+        }
+
+        HttpServletRequest request = attributes.getRequest();
+
+        // 헤더 검증 로직
+        String headerKey = requireHeaderValidation.keyId(); // 애노테이션에서 키 이름 추출
+        String actualHeaderValue = request.getHeader(headerKey);
+
+        String controller = joinPoint.getSignature().getDeclaringType().getSimpleName();
+        String method = joinPoint.getSignature().getName();
+        String expectedValue = /* Properties에서 controller.method.keyId 로 조회 */;
+
+        if (!expectedValue.equals(actualHeaderValue)) {
+            throw new UnauthorizedHeaderException("헤더 인증 실패"); // 예외는 직접 정의
+        }
+
+        return joinPoint.proceed();
+    }
 }
