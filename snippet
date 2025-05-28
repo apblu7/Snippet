@@ -1,1 +1,26 @@
-chrome.exe --disable-web-security --user-data-dir="C:\chrome-dev" path\to\your\file.html
+.summary-item {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-item .col {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-item .name {
+  flex: 0 0 150px;
+}
+
+.summary-item .status {
+  flex: 0 0 100px;
+}
+
+.summary-item .body {
+  flex: 1;
+}
