@@ -1,23 +1,29 @@
-@Component
+@ControllerAdvice(basePackages = "com.example.api.controller")
 public class HeaderValidationAdvice {
 
-    private final Properties authProperties;
+    private final Properties authHeaderProperties;
 
-    public HeaderValidationAdvice(@Qualifier("authHeaderProperties") Properties authProperties) {
-        this.authProperties = authProperties;
+    public HeaderValidationAdvice(@Qualifier("authHeaderProperties") Properties authHeaderProperties) {
+        this.authHeaderProperties = authHeaderProperties;
     }
 
     @ModelAttribute
     public void validateHeader(HttpServletRequest request, HandlerMethod handlerMethod) {
-        String controller = handlerMethod.getBeanType().getSimpleName();
-        String method = handlerMethod.getMethod().getName();
-        String keyId = "user-key"; // 예시
+        Method method = handlerMethod.getMethod();
+        RequireHeaderValidation annotation = method.getAnnotation(RequireHeaderValidation.class);
 
-        String headerValue = request.getHeader(keyId);
-        String expectedValue = authProperties.getProperty(controller + "." + method + "." + keyId);
+        if (annotation != null) {
+            String controller = handlerMethod.getBeanType().getSimpleName(); // ex: ExternalApiController
+            String methodName = method.getName(); // ex: getData
+            String keyId = annotation.keyId(); // ex: user-key
+            String actualValue = request.getHeader(keyId);
 
-        if (!Objects.equals(headerValue, expectedValue)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "인증 실패");
+            String propertyKey = controller + "." + methodName + "." + keyId;
+            String expectedValue = authHeaderProperties.getProperty(propertyKey);
+
+            if (!Objects.equals(expectedValue, actualValue)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "인증 실패: 헤더 값이 일치하지 않습니다");
+            }
         }
     }
 }
