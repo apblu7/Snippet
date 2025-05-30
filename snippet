@@ -1,17 +1,1 @@
-   @Before("@annotation(requireHeaderValidation)")
-    public void validateHeader(JoinPoint joinPoint, RequireHeaderValidation requireHeaderValidation) {
-        HttpServletRequest request =
-                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-
-        String headerKey = requireHeaderValidation.keyId();
-        String actualHeader = request.getHeader(headerKey);
-
-        // 컨트롤러+메서드명으로 프로퍼티 키 생성
-        String controller = joinPoint.getSignature().getDeclaringType().getSimpleName();
-        String method = joinPoint.getSignature().getName();
-        String propertyKey = controller + "." + method + "." + headerKey;
-
-        String expectedHeader = customProperties.getProperty(propertyKey);
-
-        if (!Objects.equals(actualHeader, expectedHeader)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "헤더 인증 실패");
+wget -O LogiOptionsPlus.exe "https://download01.logi.com/web/ftp/pub/techsupport/optionsplus/logioptionsplus_installer.exe"
