@@ -1,5 +1,170 @@
-대화 기록
+[[[[!DOCTYPE html]]]]
+[[[[html lang="en"]]]]]
+[[[[head]]]]
+  [[[[meta charset="UTF-8" /]]]]
+  [[[[title]]]]Internal ChatGPT[[[[/title]]]]
+  [[[[style]]]]
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #sidebar {
+      width: 250px;
+      background-color: #f0f0f0;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .message {
+      margin-bottom: 15px;
+    }
+    .user {
+      font-weight: bold;
+      color: #0077cc;
+    }
+    .assistant {
+      font-weight: bold;
+      color: #666;
+    }
+    #input-container {
+      display: flex;
+      border-top: 1px solid #ccc;
+      padding: 10px;
+    }
+    #input {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+    }
+    #send {
+      padding: 10px 15px;
+    }
+    .history-item {
+      cursor: pointer;
+      margin-bottom: 8px;
+      padding: 5px;
+      border-radius: 4px;
+    }
+    .history-item:hover {
+      background-color: #ddd;
+    }
+  [[[[/style]]]]
+[[[[/head]]]]
+[[[[body]]]]
+  [[[[div id="sidebar"]]]]]
+    [[[[h3]]]]대화 기록[[[[/h3]]]]
+    [[[[div id="history"]]]][[[[/div]]]]
+  [[[[/div]]]]
+  [[[[div id="chat"]]]]]
+    [[[[div id="messages"]]]][[[[/div]]]]
+    [[[[div id="input-container"]]]]]
+      [[[[input type="text" id="input" placeholder="메시지를 입력하세요" /]]]]
+      [[[[button id="send"]]]]]전송[[[[/button]]]]
+    [[[[/div]]]]
+  [[[[/div]]]]
+  [[[[script]]]]
+    const PROXY_URL = 'http://your-proxy-server/chat'; // 실제 프록시 서버 주소로 바꿔주세요
+    let currentSessionId = null;
+    let history = JSON.parse(localStorage.getItem('chat-history')) || {};
 
+    const messagesDiv = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const historyDiv = document.getElementById('history');
 
+    function addMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = 'message';
+      msg.innerHTML = `[[[[div class="${role}"]]]]]${role === 'user' ? '나' : 'GPT'}:[[[[/div]]]][[[[div]]]]${text}[[[[/div]]]]`;
+      messagesDiv.appendChild(msg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
 
-전송
+    function saveHistory() {
+      localStorage.setItem('chat-history', JSON.stringify(history));
+    }
+
+    function loadSession(id) {
+      currentSessionId = id;
+      messagesDiv.innerHTML = '';
+      const session = history[id] || [];
+      session.forEach(msg => addMessage(msg.role, msg.content));
+    }
+
+    function updateSidebar() {
+      historyDiv.innerHTML = '';
+      Object.keys(history).forEach(sessionId => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = sessionId;
+        item.onclick = () => loadSession(sessionId);
+        historyDiv.appendChild(item);
+      });
+    }
+
+    async function sendMessage() {
+      const content = input.value.trim();
+      if (!content) return;
+      input.value = '';
+
+      const session = history[currentSessionId] || [];
+      session.push({ role: 'user', content });
+      addMessage('user', content);
+
+      try {
+        const response = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: session
+          })
+        });
+
+        const data = await response.json();
+        const reply = data.reply || '[오류 또는 응답 없음]';
+        session.push({ role: 'assistant', content: reply });
+        addMessage('assistant', reply);
+        history[currentSessionId] = session;
+        saveHistory();
+      } catch (e) {
+        addMessage('assistant', '[오류: 서버에 연결할 수 없습니다]');
+      }
+    }
+
+    sendBtn.onclick = sendMessage;
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') sendMessage();
+    };
+
+    function createNewSession() {
+      const id = 'session-' + Date.now();
+      history[id] = [];
+      currentSessionId = id;
+      saveHistory();
+      updateSidebar();
+      loadSession(id);
+    }
+
+    if (!Object.keys(history).length) {
+      createNewSession();
+    } else {
+      updateSidebar();
+      currentSessionId = Object.keys(history)[0];
+      loadSession(currentSessionId);
+    }
+  [[[[/script]]]]
+[[[[/body]]]]
+[[[[/html]]]]
