@@ -2,7 +2,10 @@
 [[[[html lang="en"]]]]]
 [[[[head]]]]
   [[[[meta charset="UTF-8" /]]]]
+  [[[[meta name="viewport" content="width=device-width, initial-scale=1.0" /]]]]
+  [[[[meta http-equiv="X-UA-Compatible" content="IE=edge" /]]]]
   [[[[title]]]]Internal ChatGPT[[[[/title]]]]
+  [[[[link rel="icon" href="data:," /]]]] <!-- 빈 favicon 방지 -->
   [[[[style]]]]
     body {
       margin: 0;
@@ -75,96 +78,6 @@
       [[[[button id="send"]]]]]전송[[[[/button]]]]
     [[[[/div]]]]
   [[[[/div]]]]
-  [[[[script]]]]
-    const PROXY_URL = 'http://your-proxy-server/chat'; // 실제 프록시 서버 주소로 바꿔주세요
-    let currentSessionId = null;
-    let history = JSON.parse(localStorage.getItem('chat-history')) || {};
-
-    const messagesDiv = document.getElementById('messages');
-    const input = document.getElementById('input');
-    const sendBtn = document.getElementById('send');
-    const historyDiv = document.getElementById('history');
-
-    function addMessage(role, text) {
-      const msg = document.createElement('div');
-      msg.className = 'message';
-      msg.innerHTML = `[[[[div class="${role}"]]]]]${role === 'user' ? '나' : 'GPT'}:[[[[/div]]]][[[[div]]]]${text}[[[[/div]]]]`;
-      messagesDiv.appendChild(msg);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function saveHistory() {
-      localStorage.setItem('chat-history', JSON.stringify(history));
-    }
-
-    function loadSession(id) {
-      currentSessionId = id;
-      messagesDiv.innerHTML = '';
-      const session = history[id] || [];
-      session.forEach(msg => addMessage(msg.role, msg.content));
-    }
-
-    function updateSidebar() {
-      historyDiv.innerHTML = '';
-      Object.keys(history).forEach(sessionId => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        item.textContent = sessionId;
-        item.onclick = () => loadSession(sessionId);
-        historyDiv.appendChild(item);
-      });
-    }
-
-    async function sendMessage() {
-      const content = input.value.trim();
-      if (!content) return;
-      input.value = '';
-
-      const session = history[currentSessionId] || [];
-      session.push({ role: 'user', content });
-      addMessage('user', content);
-
-      try {
-        const response = await fetch(PROXY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: session
-          })
-        });
-
-        const data = await response.json();
-        const reply = data.reply || '[오류 또는 응답 없음]';
-        session.push({ role: 'assistant', content: reply });
-        addMessage('assistant', reply);
-        history[currentSessionId] = session;
-        saveHistory();
-      } catch (e) {
-        addMessage('assistant', '[오류: 서버에 연결할 수 없습니다]');
-      }
-    }
-
-    sendBtn.onclick = sendMessage;
-    input.onkeydown = (e) => {
-      if (e.key === 'Enter') sendMessage();
-    };
-
-    function createNewSession() {
-      const id = 'session-' + Date.now();
-      history[id] = [];
-      currentSessionId = id;
-      saveHistory();
-      updateSidebar();
-      loadSession(id);
-    }
-
-    if (!Object.keys(history).length) {
-      createNewSession();
-    } else {
-      updateSidebar();
-      currentSessionId = Object.keys(history)[0];
-      loadSession(currentSessionId);
-    }
-  [[[[/script]]]]
+  [[[[script src="main.js"]]]][[[[/script]]]]
 [[[[/body]]]]
 [[[[/html]]]]
