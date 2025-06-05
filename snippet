@@ -1,128 +1,151 @@
-const messagesEl = document.getElementById("messages");
-const inputEl = document.getElementById("input");
-const sendBtn = document.getElementById("send");
-const modelSelect = document.getElementById("model");
-const historyEl = document.getElementById("history");
-const newChatBtn = document.getElementById("new-chat");
-
-let history = JSON.parse(localStorage.getItem("chat-history") || "{}");
-let currentSessionId = null;
-
-function saveHistory() {
-  localStorage.setItem("chat-history", JSON.stringify(history));
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  height: 100vh;
 }
 
-function renderMessages() {
-  messagesEl.innerHTML = "";
-  const session = history[currentSessionId] || [];
-  session.forEach((msg) => {
-    const div = document.createElement("div");
-    div.className = "message " + msg.role;
-    div.textContent = msg.content;
-    messagesEl.appendChild(div);
-  });
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+#container {
+  display: flex;
+  width: 100%;
 }
 
-function updateSidebar() {
-  historyEl.innerHTML = "";
-  for (const id in history) {
-    const div = document.createElement("div");
-    div.className = "session";
-    div.innerHTML = `<span>${id}</span><span class="delete">×</span>`;
-    div.onclick = () => {
-      currentSessionId = id;
-      renderMessages();
-    };
-    div.querySelector(".delete").onclick = (e) => {
-      e.stopPropagation();
-      delete history[id];
-      saveHistory();
-      updateSidebar();
-      if (currentSessionId === id) {
-        currentSessionId = null;
-        messagesEl.innerHTML = "";
-      }
-    };
-    historyEl.appendChild(div);
-  }
+#sidebar {
+  width: 250px;
+  background-color: #f4f4f4;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  overflow-y: auto;
+  transition: width 0.3s;
 }
 
-function createNewSession() {
-  const model = modelSelect.value;
-  const now = new Date().toLocaleString();
-  const id = `세션 (${now})`;
-  history[id] = [
-    {
-      role: "system",
-      content: `새 채팅이 시작되었습니다.\n모델: ${model}\n시작 시간: ${now}`
-    }
-  ];
-  history = { [id]: history[id], ...history };
-  currentSessionId = id;
-  saveHistory();
-  localStorage.setItem("selectedSession", currentSessionId);
-  updateSidebar();
-  renderMessages();
+#new-chat {
+  margin-bottom: 10px;
+  padding: 10px;
+  cursor: pointer;
 }
 
-async function sendMessage() {
-  const message = inputEl.value.trim();
-  if (!message || !currentSessionId) return;
-
-  const model = modelSelect.value;
-  const session = history[currentSessionId];
-  session.push({ role: "user", content: message });
-  renderMessages();
-  inputEl.value = "";
-
-  const payload = {
-    model,
-    messages: session,
-  };
-
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer sk-...YOUR_API_KEY..."
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await res.json();
-  const reply = data.choices?.[0]?.message?.content || "[응답 오류]";
-  session.push({ role: "assistant", content: reply });
-  saveHistory();
-  renderMessages();
+.session {
+  position: relative;
+  padding: 8px 30px 8px 10px;
+  margin-bottom: 6px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background 0.2s;
 }
 
-sendBtn.onclick = sendMessage;
-
-inputEl.addEventListener('keydown', function(event) {
-  if (event.key === 'Enter' && event.shiftKey) {
-    const cursorPosition = this.selectionStart;
-    const value = this.value;
-    this.value = value.substring(0, cursorPosition) + '\n' + value.substring(cursorPosition);
-    event.preventDefault();
-  } else if (event.key === 'Enter') {
-    event.preventDefault();
-    sendMessage();
-  }
-});
-
-newChatBtn.onclick = createNewSession;
-
-updateSidebar();
-
-function loadSession() {
-  let sessions = Object.keys(history);
-  if (sessions.length > 0) {
-    currentSessionId = sessions[0];
-    renderMessages();
-  }
+.session:hover {
+  background: #f9f9f9;
 }
 
-window.onload = () => {
-  loadSession();
-};
+.session span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+  font-size: 14px;
+}
+
+.delete {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  color: #999;
+  background: white;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-size: 12px;
+  z-index: 10;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  font-weight: normal;
+}
+
+.session:hover .delete {
+  display: block;
+  color: #888;
+  font-weight: bold;
+}
+
+#model {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #aaa;
+  background-color: #fff;
+}
+
+#chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#header {
+  padding: 10px;
+  background-color: #eee;
+  border-bottom: 1px solid #ddd;
+}
+
+#messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #fafafa;
+}
+
+.message {
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.message.user {
+  text-align: right;
+  font-weight: bold;
+}
+
+.message.assistant {
+  background-color: #f0f0f0;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+#input-area {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+}
+
+#input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 20px 0 0 20px;
+  font-size: 16px;
+  outline: none;
+  overflow-wrap: break-word;
+  resize: none;
+  min-height: 50px;
+  max-height: 200px;
+  white-space: pre-wrap;
+}
+
+#send {
+  padding: 0 20px;
+  background-color: #f4f4f4;
+  color: #333;
+  border: 1px solid #ccc;
+  border-left: none;
+  border-radius: 0 20px 20px 0;
+  cursor: pointer;
+  font-size: 16px;
+}
