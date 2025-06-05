@@ -1,7 +1,39 @@
-[[[[!DOCTYPE html]]]]
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>ChatGPT 클론</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="container">
+    <aside id="sidebar">
+      <button id="new-chat">+ 새 채팅</button>
+      <div id="history"></div>
+    </aside>
+    <main id="chat">
+      <div id="header">
+        <select id="model">
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo (₩0.0015/1K)</option>
+          <option value="gpt-3.5-turbo-0125">gpt-3.5-turbo-0125 (₩0.0015/1K)</option>
+          <option value="gpt-4">gpt-4 (₩0.06/1K)</option>
+          <option value="gpt-4-turbo">gpt-4-turbo (₩0.01/1K)</option>
+          <option value="gpt-4o" selected>gpt-4o (₩0.005/1K)</option>
+        </select>
+      </div>
+      <div id="messages"></div>
+      <div id="input-area">
+        <textarea id="input" placeholder="메시지를 입력하세요..." rows="4"></textarea>
+        <button id="send">전송</button>
+      </div>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
 [[[[html lang="en"]]]]]
 [[[[head]]]]
-  [[[[meta charset="UTF-8" /]]]]
+  [[[[ c="UTF-8" /]]]]
   [[[[meta name="viewport" content="width=device-width, initial-scale=1.0" /]]]]
   [[[[meta http-equiv="X-UA-Compatible" content="IE=edge" /]]]]
   [[[[title]]]]Internal ChatGPT[[[[/title]]]]
