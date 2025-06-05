@@ -1,115 +1,128 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <title>ChatGPT 클론</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div id="container">
-    <aside id="sidebar">
-      <button id="new-chat">+ 새 채팅</button>
-      <div id="history"></div>
-    </aside>
-    <main id="chat">
-      <div id="header">
-        <select id="model">
-          <option value="gpt-3.5-turbo">gpt-3.5-turbo (₩0.0015/1K)</option>
-          <option value="gpt-3.5-turbo-0125">gpt-3.5-turbo-0125 (₩0.0015/1K)</option>
-          <option value="gpt-4">gpt-4 (₩0.06/1K)</option>
-          <option value="gpt-4-turbo">gpt-4-turbo (₩0.01/1K)</option>
-          <option value="gpt-4o" selected>gpt-4o (₩0.005/1K)</option>
-        </select>
-      </div>
-      <div id="messages"></div>
-      <div id="input-area">
-        <textarea id="input" placeholder="메시지를 입력하세요..." rows="4"></textarea>
-        <button id="send">전송</button>
-      </div>
-    </main>
-  </div>
-  <script src="script.js"></script>
-</body>
-</html>
-[[[[html lang="en"]]]]]
-[[[[head]]]]
-  [[[[ c="UTF-8" /]]]]
-  [[[[meta name="viewport" content="width=device-width, initial-scale=1.0" /]]]]
-  [[[[meta http-equiv="X-UA-Compatible" content="IE=edge" /]]]]
-  [[[[title]]]]Internal ChatGPT[[[[/title]]]]
-  [[[[link rel="icon" href="data:," /]]]] <!-- 빈 favicon 방지 -->
-  [[[[style]]]]
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
+const messagesEl = document.getElementById("messages");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const modelSelect = document.getElementById("model");
+const historyEl = document.getElementById("history");
+const newChatBtn = document.getElementById("new-chat");
+
+let history = JSON.parse(localStorage.getItem("chat-history") || "{}");
+let currentSessionId = null;
+
+function saveHistory() {
+  localStorage.setItem("chat-history", JSON.stringify(history));
+}
+
+function renderMessages() {
+  messagesEl.innerHTML = "";
+  const session = history[currentSessionId] || [];
+  session.forEach((msg) => {
+    const div = document.createElement("div");
+    div.className = "message " + msg.role;
+    div.textContent = msg.content;
+    messagesEl.appendChild(div);
+  });
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function updateSidebar() {
+  historyEl.innerHTML = "";
+  for (const id in history) {
+    const div = document.createElement("div");
+    div.className = "session";
+    div.innerHTML = `<span>${id}</span><span class="delete">×</span>`;
+    div.onclick = () => {
+      currentSessionId = id;
+      renderMessages();
+    };
+    div.querySelector(".delete").onclick = (e) => {
+      e.stopPropagation();
+      delete history[id];
+      saveHistory();
+      updateSidebar();
+      if (currentSessionId === id) {
+        currentSessionId = null;
+        messagesEl.innerHTML = "";
+      }
+    };
+    historyEl.appendChild(div);
+  }
+}
+
+function createNewSession() {
+  const model = modelSelect.value;
+  const now = new Date().toLocaleString();
+  const id = `세션 (${now})`;
+  history[id] = [
+    {
+      role: "system",
+      content: `새 채팅이 시작되었습니다.\n모델: ${model}\n시작 시간: ${now}`
     }
-    #sidebar {
-      width: 250px;
-      background-color: #f0f0f0;
-      border-right: 1px solid #ccc;
-      padding: 10px;
-      overflow-y: auto;
-    }
-    #chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    #messages {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .message {
-      margin-bottom: 15px;
-    }
-    .user {
-      font-weight: bold;
-      color: #0077cc;
-    }
-    .assistant {
-      font-weight: bold;
-      color: #666;
-    }
-    #input-container {
-      display: flex;
-      border-top: 1px solid #ccc;
-      padding: 10px;
-    }
-    #input {
-      flex: 1;
-      padding: 10px;
-      font-size: 14px;
-    }
-    #send {
-      padding: 10px 15px;
-    }
-    .history-item {
-      cursor: pointer;
-      margin-bottom: 8px;
-      padding: 5px;
-      border-radius: 4px;
-    }
-    .history-item:hover {
-      background-color: #ddd;
-    }
-  [[[[/style]]]]
-[[[[/head]]]]
-[[[[body]]]]
-  [[[[div id="sidebar"]]]]]
-    [[[[h3]]]]대화 기록[[[[/h3]]]]
-    [[[[div id="history"]]]][[[[/div]]]]
-  [[[[/div]]]]
-  [[[[div id="chat"]]]]]
-    [[[[div id="messages"]]]][[[[/div]]]]
-    [[[[div id="input-container"]]]]]
-      [[[[input type="text" id="input" placeholder="메시지를 입력하세요" /]]]]
-      [[[[button id="send"]]]]]전송[[[[/button]]]]
-    [[[[/div]]]]
-  [[[[/div]]]]
-  [[[[script src="main.js"]]]][[[[/script]]]]
-[[[[/body]]]]
-[[[[/html]]]]
+  ];
+  history = { [id]: history[id], ...history };
+  currentSessionId = id;
+  saveHistory();
+  localStorage.setItem("selectedSession", currentSessionId);
+  updateSidebar();
+  renderMessages();
+}
+
+async function sendMessage() {
+  const message = inputEl.value.trim();
+  if (!message || !currentSessionId) return;
+
+  const model = modelSelect.value;
+  const session = history[currentSessionId];
+  session.push({ role: "user", content: message });
+  renderMessages();
+  inputEl.value = "";
+
+  const payload = {
+    model,
+    messages: session,
+  };
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer sk-...YOUR_API_KEY..."
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  const reply = data.choices?.[0]?.message?.content || "[응답 오류]";
+  session.push({ role: "assistant", content: reply });
+  saveHistory();
+  renderMessages();
+}
+
+sendBtn.onclick = sendMessage;
+
+inputEl.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter' && event.shiftKey) {
+    const cursorPosition = this.selectionStart;
+    const value = this.value;
+    this.value = value.substring(0, cursorPosition) + '\n' + value.substring(cursorPosition);
+    event.preventDefault();
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+newChatBtn.onclick = createNewSession;
+
+updateSidebar();
+
+function loadSession() {
+  let sessions = Object.keys(history);
+  if (sessions.length > 0) {
+    currentSessionId = sessions[0];
+    renderMessages();
+  }
+}
+
+window.onload = () => {
+  loadSession();
+};
