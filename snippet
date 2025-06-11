@@ -1,8 +1,1 @@
-RestTemplate restTemplate = new RestTemplate(httpRequestFactory);
-
-List<HttpMessageConverter<?>> converters = restTemplate.getMessageConverters();
-for (HttpMessageConverter<?> converter : converters) {
-    if (converter instanceof StringHttpMessageConverter) {
-        ((StringHttpMessageConverter) converter).setDefaultCharset(StandardCharsets.UTF_8);
-    }
-}
+구조를
